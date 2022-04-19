@@ -1,1 +1,1 @@
-# map-kurator-Rumsey
+# mapkurator-system
