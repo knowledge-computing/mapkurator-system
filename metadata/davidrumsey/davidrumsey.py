@@ -4,11 +4,11 @@ import pandas as pd
 
 class DavidRumsey:
 
-    def __init__(self, api_key, csv_filename):
-        self.api_key = api_key
-        self.csv_filename = csv_filename
+    csv_filename="davidrumsey_metadata.csv"
+    df = pd.read_csv(csv_filename)
 
-        self.df = pd.read_csv(self.csv_filename)
+    def __init__(self, api_key):
+        self.api_key = api_key
         self.headers = {
             'Authorization': self.api_key,
             'Content-Type': 'application/json',
