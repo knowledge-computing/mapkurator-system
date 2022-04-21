@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 
 
-class DavidRumsey():
+class DavidRumsey:
 
     def __init__(self, api_key, csv_filename):
         self.api_key = api_key
