@@ -18,7 +18,7 @@ class DavidRumsey():
             gcps: list
 
             All pairs of ground control points
-            e.g., [{'location': , 'pixel': }, ]
+            e.g., [{'location': , 'pixel': },{'location': , 'pixel': }, ... ]
         """
 
 
