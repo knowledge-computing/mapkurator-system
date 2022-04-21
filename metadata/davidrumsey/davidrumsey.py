@@ -3,6 +3,7 @@ import pandas as pd
 
 
 class DavidRumsey():
+
     def __init__(self, api_key, csv_filename):
         self.api_key = api_key
         self.csv_filename = csv_filename
