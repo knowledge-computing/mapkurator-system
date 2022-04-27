@@ -42,6 +42,7 @@ class DavidRumsey:
         try:
             res.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            print(e)
             return None
 
         data = res.json()
