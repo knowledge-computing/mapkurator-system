@@ -5,15 +5,15 @@ import os
 map_kurator_system_dir = '/home/zekun/dr_maps/mapkurator-system/'
 text_spotting_model_dir = '/home/zekun/antique_names/model/AdelaiDet/'
 
+geotif_output_dir = os.path.join(map_kurator_system_dir, 'data/100_maps_crop_outabc/8628000/')
+spotting_output_dir = os.path.join(map_kurator_system_dir, 'data/100_maps_crop_outabc/8628000/')
 
-model_output_dir = os.path.join(map_kurator_system_dir, 'data/100_maps_crop_outabc/8628000/')
-
-if not os.path.isdir(model_output_dir):
-    os.makedirs(model_output_dir)
+if not os.path.isdir(spotting_output_dir):
+    os.makedirs(spotting_output_dir)
 
 os.chdir(text_spotting_model_dir)
 
-run_model_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input '+ map_kurator_system_dir+'data/100_maps_crop/8628000/  --output '+ model_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+run_model_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input '+ map_kurator_system_dir+'data/100_maps_crop/8628000/  --output '+ spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
 
 print(run_model_command)
 

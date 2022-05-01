@@ -5,16 +5,12 @@ import numpy as np
 from geojson import Polygon, Feature, FeatureCollection, dump
 import pdb
 
-input_dir = '../data/100_maps_crop_outabc/'
-output_dir = '../data/100_maps_outabc/'
-shift_size = 1000
-
-if not os.path.isdir(output_dir):
-    os.makedirs(output_dir)
-
 pd.options.mode.chained_assignment = None
 
-def concatenate_and_convert_to_geojson(input_dir):
+def concatenate_and_convert_to_geojson(args):
+    input_dir = args.input_dir
+    output_dir = args.output_dir
+    shift_size = args.shift_size
 
     map_subdir_list = os.listdir(input_dir)
 
@@ -54,16 +50,22 @@ def concatenate_and_convert_to_geojson(input_dir):
             dump(feature_collection, f)
 
 if __name__ == '__main__':
-    concatenate_and_convert_to_geojson(input_dir)
+    #concatenate_and_convert_to_geojson(input_dir)
 
-# point = pts[int(image[:-4])].split(',')
-# point[1::2] = [str(-1*float(y)) for y in point[1::2]]
-# point = Polygon([list(map(tuple, np.array(point, dtype=np.float).reshape(-1,2)))])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_dir', type=str, default='data/100_maps_crop_abc/',
+                        help='path to input json path.')
+    parser.add_argument('--output_dir', type=str, default='data/100_maps_geojson_abc/',
+                        help='path to output geojson path')
+    parser.add_argument('--shift_size', type=int, default = 1000,
+                        help='image patch size and shift size.')
+   
+    args = parser.parse_args()
+    print(args)
 
-# features.append(Feature(geometry=point, properties={"name": name, "confidence_score": score, "averaged_confidence_score": average_score}))
+    concatenate_and_convert_to_geojson(args)
 
-# print(f'{opt.image_folder+image:25s}\t{name:25s}\t')
 
-# feature_collection = FeatureCollection(features)
-# with open("../david-rumsey-exp/mapkurator-"+ str(opt.image_folder).split("/")[4] +'.geojson', 'w+') as log:
-# dump(feature_collection, log)
+
+
+
