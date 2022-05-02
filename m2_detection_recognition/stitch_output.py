@@ -18,6 +18,9 @@ def concatenate_and_convert_to_geojson(args):
     for map_subdir in map_subdir_list:
         file_list = glob.glob(os.path.join(input_dir, map_subdir) + '/*.json')
         file_list = sorted(file_list)
+        if len(file_list) == 0:
+            print('No files found for %s' % map_subdir)
+            continue
         map_data = []
         for file_path in file_list:
             patch_index_h, patch_index_w = os.path.basename(file_path).split('.')[0].split('_')

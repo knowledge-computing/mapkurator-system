@@ -3,23 +3,27 @@ import glob
 
 map_kurator_system_dir = '/home/zekun/dr_maps/mapkurator-system/'
 text_spotting_model_dir = '/home/zekun/antique_names/model/AdelaiDet/'
-
+sample_map_path = 'm1_geotiff/data/sample_US_jp2_100_maps.csv'
 
 # run module1 to generate geotiff
 os.chdir(os.path.join(map_kurator_system_dir ,'m1_geotiff'))
+input_csv = os.path.join(map_kurator_system_dir ,sample_map_path)
 geotiff_output_dir = os.path.join(map_kurator_system_dir ,'m1_geotiff/data/geotiff')
 if not os.path.isdir(geotiff_output_dir):
     os.makedirs(geotiff_output_dir)
 
-run_geotiff_command = 'python convert_image_to_geotiff.py --out_geotif_dir '+geotiff_output_dir  # can change params in argparse
+run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
+print(run_geotiff_command)
 #os.system(run_geotiff_command)
 
 
 # run module2: image cropping
-os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+
 geotiff_path_list = glob.glob(os.path.join(geotiff_output_dir, '*.geotiff'))
+assert(len(geotiff_path_list) != 0)
 
 for geotiff_path in geotiff_path_list:
+    os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
     map_name = os.path.basename(geotiff_path).split('.')[0]
 
     cropping_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop/')
@@ -42,17 +46,19 @@ for geotiff_path in geotiff_path_list:
     print(run_spotting_command)               
     os.system(run_spotting_command)
 
-
-    # run module2: geojson stitching
-    os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
-
-    map_name = os.path.basename(geotiff_path).split('.')[0]
-    stitch_input_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/')
-    stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_geojson_abc/')
-    if not os.path.isdir(stitch_output_dir):
-        os.makedirs(stitch_output_dir)
-    run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_dir ' + stitch_output_dir 
-    print(run_stitch_command)
-    os.system(run_stitch_command)
-
     #break
+
+
+# run module2: geojson stitching
+os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+
+
+stitch_input_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/')
+stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_geojson_abc/')
+if not os.path.isdir(stitch_output_dir):
+    os.makedirs(stitch_output_dir)
+run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_dir ' + stitch_output_dir 
+print(run_stitch_command)
+os.system(run_stitch_command)
+
+    

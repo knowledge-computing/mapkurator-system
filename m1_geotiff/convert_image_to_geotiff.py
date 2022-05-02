@@ -18,7 +18,7 @@ def main(args):
 
     jp2_root_dir = args.jp2_root_dir
     sid_root_dir = args.sid_root_dir
-    out_geotif_dir = args.out_geotif_dir
+    out_geotiff_dir = args.out_geotiff_dir
 
     sample_map_path = args.sample_map_path
     external_id_key = args.external_id_key
@@ -35,7 +35,7 @@ def main(args):
     for index, record in sample_map_df.iterrows():
         external_id = record.external_id
         gcps = record.gcps
-        filename_without_extension = external_id.replace('.','')
+        filename_without_extension = external_id.strip("'").replace('.','')
 
         full_path = ''
         if filename_without_extension in jp2_file_fullpath_dict:
@@ -54,7 +54,7 @@ def main(args):
             x, y = gcp['pixel']
             gcp_str += '-gcp '+str(x) + ' ' + str(y) + ' ' + str(lng) + ' ' + str(lat) + ' '
         
-        gdal_command = 'gdal_translate -of Gtiff '+gcp_str + full_path + ' ' + os.path.join(out_geotif_dir, filename_without_extension) + '.geotiff'
+        gdal_command = 'gdal_translate -of Gtiff '+gcp_str + full_path + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'
         #print(gdal_command)
         os.system(gdal_command)
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                         help='image dir of jp2 files.')
     parser.add_argument('--sid_root_dir', type=str, default='/data/rumsey-sid/',
                         help='image dir of sid files.')
-    parser.add_argument('--out_geotif_dir', type=str, default='data/geotiff/',
+    parser.add_argument('--out_geotiff_dir', type=str, default='data/geotiff/',
                         help='output dir for geotiff')
     parser.add_argument('--sample_map_path', type=str, default='data/initial_US_100_maps.csv',
                         help='path to sample map csv, which contains gcps info')
