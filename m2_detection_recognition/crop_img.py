@@ -36,7 +36,7 @@ def main(args):
 
     for idx in range(0, num_tiles_h):
         for jdx in range(0, num_tiles_w):
-            img_clip = enlarged_map.crop((idx * shift_size, jdx * shift_size, (idx + 1) * shift_size, (jdx + 1) * shift_size))
+            img_clip = enlarged_map.crop((jdx * shift_size, idx * shift_size,(jdx + 1) * shift_size, (idx + 1) * shift_size, ))
 
             out_path = os.path.join(output_dir, 'h' + str(idx) + '_w' + str(jdx) + '.jpg')
             img_clip.save(out_path)

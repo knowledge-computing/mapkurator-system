@@ -44,7 +44,8 @@ def concatenate_and_convert_to_geojson(args):
         for index, line_data in map_df.iterrows():
             #pdb.set_trace()
             polygon_x, polygon_y = list(line_data['polygon_x']), list(line_data['polygon_y'])
-            polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
+            # y needs to be negative for geojson
+            polygon = Polygon([[[x,-y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], -polygon_y[0]]]])
             text = line_data['text']
             score = line_data['score']
             features.append(Feature(geometry = polygon, properties={"text": text, "score": score} ))
