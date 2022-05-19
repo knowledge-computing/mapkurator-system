@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 import argparse
 
-
+Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
 def main(args):
 
