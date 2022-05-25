@@ -48,14 +48,18 @@ def main(args):
                     map_polygon = Polygon(pts)
                     map_text = str(feature_data['properties']['text']).lower()
                     map_text = regex.sub(' ', map_text) # remove all non-alphabetic characters
-
+                    
                     query = f"""SELECT p.ogc_fid
                         FROM  polygon_features p
                         WHERE LOWER(p.name) LIKE '%%{map_text}%%'
-                        AND ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID('{map_polygon}'::geometry, 4326)::geometry, 4326), p.wkb_geometry);
+                        AND ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'::geometry), 4326)::geometry, 4326), p.wkb_geometry);
                     """
 
-                    intersect_df = pd.read_sql(query, con=conn)
+                    try:
+                        intersect_df = pd.read_sql(query, con=conn)
+                    except sqlalchemy.exc.InternalError:
+                        continue
+                        
                     if not intersect_df.empty:
                         feature_data['properties']['osm_ogc_fid'] = intersect_df['ogc_fid'].values.tolist()
                     # else:
