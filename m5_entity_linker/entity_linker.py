@@ -32,8 +32,7 @@ def main(args):
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '')
     midwest = ["Illinois", "Missouri", "Kansas", "Iowa", "South Dakota", "Indiana", "Ohio", "Wisconsin", "Minnesota", "Michigan"]
 
-    geojson_files = os.listdir(args.in_geojson_dir)[9:10]
-    # print(geojson_files)
+    geojson_files = os.listdir(args.in_geojson_dir)
     for i, geojson_file in enumerate(geojson_files):
         row = sample_map_df[sample_map_df['external_id']==geojson_file.split(".")[0]]
         gcps = ast.literal_eval(row.iloc[0]['gcps'])
