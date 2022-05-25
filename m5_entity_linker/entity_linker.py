@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 import geocoder
 from shapely.geometry import Polygon
 
+import re
 
 load_dotenv()
 
@@ -27,6 +28,7 @@ connection_string = f'postgresql://postgres:{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST
 def main(args):
 
     # check if first pair of gcps is in midwest-US
+    regex = re.compile('[^a-zA-Z]')
     conn = create_engine(connection_string, echo=False)
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '')
@@ -45,7 +47,7 @@ def main(args):
                     pts = np.array(feature_data['geometry']['coordinates']).reshape(-1, 2)
                     map_polygon = Polygon(pts)
                     map_text = str(feature_data['properties']['text']).lower()
-                    map_text = map_text.replace("'", "")
+                    map_text = regex.sub(' ', map_text) # remove all non-alphabetic characters
 
                     query = f"""SELECT p.ogc_fid
                         FROM  polygon_features p
