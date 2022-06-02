@@ -3,7 +3,9 @@ import os
 from PIL import Image 
 import numpy as np
 import argparse
+import logging
 
+logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
 def main(args):
@@ -41,7 +43,7 @@ def main(args):
             out_path = os.path.join(output_dir, 'h' + str(idx) + '_w' + str(jdx) + '.jpg')
             img_clip.save(out_path)
 
-    print('Done cropping %s' %img_path )
+    logging.info('Done cropping %s' %img_path )
 
 
 if __name__ == '__main__':

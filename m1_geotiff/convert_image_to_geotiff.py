@@ -3,8 +3,10 @@ import glob
 import pandas as pd
 import ast
 import argparse
+import logging
 import pdb
 
+logging.basicConfig(level=logging.INFO)
 
 def func_file_to_fullpath_dict(file_path_list):
 
@@ -58,7 +60,7 @@ def main(args):
         #print(gdal_command)
         os.system(gdal_command)
 
-    print('done')
+        logging.info('Done generating geotiff for %s', external_id)
 
 
 if __name__ == '__main__':

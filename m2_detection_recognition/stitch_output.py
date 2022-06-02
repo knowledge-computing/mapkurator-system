@@ -4,8 +4,10 @@ import pandas as pd
 import numpy as np
 import argparse
 from geojson import Polygon, Feature, FeatureCollection, dump
+import logging
 import pdb
 
+logging.basicConfig(level=logging.INFO)
 pd.options.mode.chained_assignment = None
 
 def concatenate_and_convert_to_geojson(args):
@@ -53,6 +55,8 @@ def concatenate_and_convert_to_geojson(args):
         feature_collection = FeatureCollection(features)
         with open(os.path.join(output_dir, map_subdir +'.geojson'), 'w') as f:
             dump(feature_collection, f)
+        
+        logging.info('Done generating geojson (img coord) for %s', map_subdir)
 
 if __name__ == '__main__':
     #concatenate_and_convert_to_geojson(input_dir)

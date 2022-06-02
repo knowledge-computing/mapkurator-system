@@ -1,86 +1,146 @@
 import os
 import glob
+import argparse
+import time
+import logging
 
-# map_kurator_system_dir = '/home/zekun/dr_maps/mapkurator-system/'
-map_kurator_system_dir = '/Users/jinak/mapkurator-system/'
-# text_spotting_model_dir = '/home/zekun/antique_names/model/AdelaiDet/'
-sample_map_path = 'm1_geotiff/data/sample_US_jp2_100_maps.csv'
+logging.basicConfig(level=logging.INFO)
 
-# # run module1 to generate geotiff
-# os.chdir(os.path.join(map_kurator_system_dir ,'m1_geotiff'))
-input_csv = os.path.join(map_kurator_system_dir ,sample_map_path)
-# geotiff_output_dir = os.path.join(map_kurator_system_dir ,'m1_geotiff/data/geotiff')
-# if not os.path.isdir(geotiff_output_dir):
-#     os.makedirs(geotiff_output_dir)
+def run_pipeline(args):
+    map_kurator_system_dir = args.map_kurator_system_dir
+    text_spotting_model_dir = args.text_spotting_model_dir
+    sample_map_path = args.sample_map_csv_path
 
-# run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
-# print(run_geotiff_command)
-# #os.system(run_geotiff_command)
+    module_gen_geotiff = args.module_gen_geotiff
+    module_text_spotting = args.module_text_spotting
+    module_img_geojson = args.module_img_geojson 
+    module_geocoord_geojson = args.module_geocoord_geojson 
+    module_entity_linking = args.module_entity_linking
+
+    input_csv_path = os.path.join(map_kurator_system_dir ,sample_map_path)
+    geotiff_output_dir = os.path.join(map_kurator_system_dir ,'m1_geotiff/data/geotiff')
+    cropping_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop/')
+    spotting_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/')
+    stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_geojson_abc/')
+    geojson_output_dir = os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter', 'data/100_maps_geojson_abc_geocoord/')
+    
+    time_start =  time.time()
+    if module_gen_geotiff:
+        # run module1 to generate geotiff
+        os.chdir(os.path.join(map_kurator_system_dir ,'m1_geotiff'))
+        
+        if not os.path.isdir(geotiff_output_dir):
+            os.makedirs(geotiff_output_dir)
+
+        run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
+        print(run_geotiff_command)
+        os.system(run_geotiff_command)
+
+    time_geotiff = time.time()
+    logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
+
+    if module_text_spotting:
+        
+        geotiff_path_list = glob.glob(os.path.join(geotiff_output_dir, '*.geotiff'))
+        assert(len(geotiff_path_list) != 0)
+        
+        for geotiff_path in geotiff_path_list:
+            #run module2: image cropping
+            os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+            map_name = os.path.basename(geotiff_path).split('.')[0]
+        
+            if not os.path.isdir(cropping_output_dir):
+                os.makedirs(cropping_output_dir)
+            run_crop_command = 'python crop_img.py --img_path '+geotiff_path + ' --output_dir '+ cropping_output_dir
+
+            print(run_crop_command)
+            os.system(run_crop_command)
+        
+            # run module2: text spotting
+            os.chdir(text_spotting_model_dir)
+            map_name = os.path.basename(geotiff_path).split('.')[0]
+        
+            map_spotting_output_dir = os.path.join(spotting_output_dir,map_name)
+            if not os.path.isdir(map_spotting_output_dir):
+                os.makedirs(map_spotting_output_dir)
+        
+            run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input '+ map_kurator_system_dir+'/m2_detection_recognition/data/100_maps_crop/'+map_name+'  --output '+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+            run_spotting_command  += ' 1> /dev/null'
+            print(run_spotting_command)
+            os.system(run_spotting_command)
+            logging.info('Done text spotting for %s', map_name)
+
+    time_text_spotting = time.time()
+    logging.info('Time for text spotting : %d',time_text_spotting - time_geotiff)
+
+    if module_img_geojson:
+        # run module2: geojson stitching
+        os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+        stitch_input_dir = spotting_output_dir
+        
+        if not os.path.isdir(stitch_output_dir):
+            os.makedirs(stitch_output_dir)
+        run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_dir ' + stitch_output_dir
+        print(run_stitch_command)
+        os.system(run_stitch_command)
+
+    time_img_geojson = time.time()
+    logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
+
+    if module_geocoord_geojson:
+        # run module4: convert image coordinates to geocoordinates
+        os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
+        
+        if not os.path.isdir(geojson_output_dir):
+            os.makedirs(geojson_output_dir)
+        
+        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+stitch_output_dir +' --out_geojson_dir '+geojson_output_dir
+        print(run_converter_command)
+        os.system(run_converter_command)
+
+    time_geocoord_geojson = time.time()
+    logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
+
+    if module_entity_linking:
+        # run module5: link entities in OSM
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_entity_linker'))
+        geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_entity_linker', 'data/100_maps_geojson_abc_linked/')
+        if not os.path.isdir(geojson_output_dir):
+            os.makedirs(geojson_output_dir)
+
+        run_linker_command = 'python entity_linker.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
+        print(run_linker_command)
+        os.system(run_linker_command)
+
+    time_entity_linking = time.time()
+    logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
 
 
-# run module2: image cropping
+def main():
+    parser = argparse.ArgumentParser()
 
-# geotiff_path_list = glob.glob(os.path.join(geotiff_output_dir, '*.geotiff'))
-# assert(len(geotiff_path_list) != 0)
-#
-# for geotiff_path in geotiff_path_list:
-#     os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
-#     map_name = os.path.basename(geotiff_path).split('.')[0]
-#
-#     cropping_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop/')
-#     if not os.path.isdir(cropping_output_dir):
-#         os.makedirs(cropping_output_dir)
-#     run_crop_command = 'python crop_img.py --img_path '+geotiff_path + ' --output_dir '+ cropping_output_dir
-#     print(run_crop_command)
-#     os.system(run_crop_command)
-#
-#     # run module2: text spotting
-#     os.chdir(text_spotting_model_dir)
-#     map_name = os.path.basename(geotiff_path).split('.')[0]
-#
-#     spotting_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/',map_name)
-#     if not os.path.isdir(spotting_output_dir):
-#         os.makedirs(spotting_output_dir)
-#
-#     run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input '+ map_kurator_system_dir+'/m2_detection_recognition/data/100_maps_crop/'+map_name+'  --output '+ spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
-#     run_spotting_command  += ' 1> /dev/null'
-#     print(run_spotting_command)
-#     os.system(run_spotting_command)
+    parser.add_argument('--map_kurator_system_dir', type=str, default='/home/zekun/dr_maps/mapkurator-system/')
+    parser.add_argument('--text_spotting_model_dir', type=str, default='/home/zekun/antique_names/model/AdelaiDet/')
+    parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv')
+    
+    parser.add_argument('--module_gen_geotiff', default=False, action='store_true')
+    parser.add_argument('--module_text_spotting', default=False, action='store_true')
+    parser.add_argument('--module_img_geojson', default=False, action='store_true')
+    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
+    parser.add_argument('--module_entity_linking', default=False, action='store_true')
 
-    #break
+                        
+    args = parser.parse_args()
+    print('\n')
+    print(args)
+    print('\n')
 
-
-# run module2: geojson stitching
-# os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
-#
-#
-# stitch_input_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/')
-# stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_geojson_abc/')
-# if not os.path.isdir(stitch_output_dir):
-#     os.makedirs(stitch_output_dir)
-# run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_dir ' + stitch_output_dir
-# print(run_stitch_command)
-# os.system(run_stitch_command)
+    run_pipeline(args)
 
 
 
-# run module4: convert image coordinates to geocoordinates
-# os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
-geojson_output_dir = os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter', 'data/100_maps_geojson_abc_geocoord/')
-# if not os.path.isdir(geojson_output_dir):
-#     os.makedirs(geojson_output_dir)
-#
-# run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ input_csv +' --in_geojson_dir '+stitch_output_dir +' --out_geojson_dir '+geojson_output_dir
-# print(run_converter_command)
-# os.system(run_converter_command)
+if __name__ == '__main__':
 
+    main()
 
-# run module5: link entities in OSM
-os.chdir(os.path.join(map_kurator_system_dir, 'm5_entity_linker'))
-geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_entity_linker', 'data/100_maps_geojson_abc_linked/')
-if not os.path.isdir(geojson_output_dir):
-    os.makedirs(geojson_output_dir)
-
-run_linker_command = 'python entity_linker.py --sample_map_path '+ input_csv +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
-print(run_linker_command)
-os.system(run_linker_command)
+    
