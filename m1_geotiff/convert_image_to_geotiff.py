@@ -81,8 +81,4 @@ if __name__ == '__main__':
     print(args)
 
 
-    # if not os.path.isdir(args.out_geotif_dir):
-    #     os.makedirs(args.out_geotif_dir)
-    #     print('created dir',args.out_geotif_dir)
-
     main(args)

@@ -3,6 +3,8 @@ import glob
 import argparse
 import time
 import logging
+import pandas as pd
+from utils import get_img_path_from_external_id
 
 logging.basicConfig(level=logging.INFO)
 
@@ -10,6 +12,8 @@ def run_pipeline(args):
     map_kurator_system_dir = args.map_kurator_system_dir
     text_spotting_model_dir = args.text_spotting_model_dir
     sample_map_path = args.sample_map_csv_path
+    expt_prefix = args.expt_prefix
+    output_folder = args.output_folder
 
     module_gen_geotiff = args.module_gen_geotiff
     module_text_spotting = args.module_text_spotting
@@ -17,12 +21,24 @@ def run_pipeline(args):
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_entity_linking = args.module_entity_linking
 
-    input_csv_path = os.path.join(map_kurator_system_dir ,sample_map_path)
-    geotiff_output_dir = os.path.join(map_kurator_system_dir ,'m1_geotiff/data/geotiff')
-    cropping_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop/')
-    spotting_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_crop_outabc/')
-    stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/100_maps_geojson_abc/')
-    geojson_output_dir = os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter', 'data/100_maps_geojson_abc_geocoord/')
+    #input_csv_path = os.path.join(map_kurator_system_dir ,sample_map_path)
+    input_csv_path = sample_map_path
+    sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
+
+
+    # geotiff_output_dir = os.path.join(map_kurator_system_dir ,'m1_geotiff/data/geotiff')
+    # cropping_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/'+expt_prefix+'_crop/')
+    # spotting_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/'+expt_prefix+'_crop_outabc/')
+    # stitch_output_dir = os.path.join(map_kurator_system_dir, 'm2_detection_recognition', 'data/'+expt_prefix+'_geojson_abc/')
+    # geojson_output_dir = os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter', 'data/'+expt_prefix+'_geojson_abc_geocoord/')
+
+    geotiff_output_dir = os.path.join(output_folder, expt_prefix + '_geotiff')
+    cropping_output_dir = os.path.join(output_folder, expt_prefix + '_crop/')
+    spotting_output_dir = os.path.join(output_folder, expt_prefix + '_crop_outabc/')
+    stitch_output_dir = os.path.join(output_folder, expt_prefix + '_geojson_abc/')
+    geojson_output_dir = os.path.join(output_folder, expt_prefix + '_geojson_abc_geocoord/')
+
+    external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
     
     time_start =  time.time()
     if module_gen_geotiff:
@@ -39,32 +55,42 @@ def run_pipeline(args):
     time_geotiff = time.time()
     logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
 
+    
     if module_text_spotting:
         
-        geotiff_path_list = glob.glob(os.path.join(geotiff_output_dir, '*.geotiff'))
-        assert(len(geotiff_path_list) != 0)
+        #geotiff_path_list = glob.glob(os.path.join(geotiff_output_dir, '*.geotiff'))
+        #assert(len(geotiff_path_list) != 0)
+
+        for index, record in sample_map_df.iterrows():
+            external_id = record.external_id
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+
+            if img_path[-4:] == '.sid':
+                continue
         
-        for geotiff_path in geotiff_path_list:
-            #run module2: image cropping
+            # for geotiff_path in geotiff_path_list:
+            #     #run module2: image cropping
+            #     os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+            #     map_name = os.path.basename(geotiff_path).split('.')[0]
+        
             os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
-            map_name = os.path.basename(geotiff_path).split('.')[0]
-        
             if not os.path.isdir(cropping_output_dir):
                 os.makedirs(cropping_output_dir)
-            run_crop_command = 'python crop_img.py --img_path '+geotiff_path + ' --output_dir '+ cropping_output_dir
+            run_crop_command = 'python crop_img.py --img_path '+img_path + ' --output_dir '+ cropping_output_dir
 
             print(run_crop_command)
             os.system(run_crop_command)
         
             # run module2: text spotting
             os.chdir(text_spotting_model_dir)
-            map_name = os.path.basename(geotiff_path).split('.')[0]
+            # map_name = os.path.basename(geotiff_path).split('.')[0]
         
             map_spotting_output_dir = os.path.join(spotting_output_dir,map_name)
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
         
-            run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input '+ map_kurator_system_dir+'/m2_detection_recognition/data/100_maps_crop/'+map_name+'  --output '+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+            run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input='+ os.path.join(cropping_output_dir,map_name) + '  --output='+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             run_spotting_command  += ' 1> /dev/null'
             print(run_spotting_command)
             os.system(run_spotting_command)
@@ -122,6 +148,8 @@ def main():
     parser.add_argument('--map_kurator_system_dir', type=str, default='/home/zekun/dr_maps/mapkurator-system/')
     parser.add_argument('--text_spotting_model_dir', type=str, default='/home/zekun/antique_names/model/AdelaiDet/')
     parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv')
+    parser.add_argument('--output_folder', type=str, default='/data2/dr_output')
+    parser.add_argument('--expt_prefix', type=str, default='1000_maps')
     
     parser.add_argument('--module_gen_geotiff', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
