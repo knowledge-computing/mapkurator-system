@@ -46,7 +46,6 @@ def run_pipeline(args):
     sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
     external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
     
-    #time_usage_df = pd.DataFrame({'external_id':sample_map_df['external_id')}) # initialization
     
     time_usage_dict = dict()
     for ex_id in sample_map_df['external_id']:
@@ -108,12 +107,11 @@ def run_pipeline(args):
         os.chdir(text_spotting_model_dir)
 
         for index, record in sample_map_df.iterrows():
+
             external_id = record.external_id
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            # if img_path[-4:] == '.sid':
-            #     continue
 
             map_spotting_output_dir = os.path.join(spotting_output_dir,map_name)
             if not os.path.isdir(map_spotting_output_dir):
