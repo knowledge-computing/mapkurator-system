@@ -6,9 +6,11 @@ import logging
 import pandas as pd
 import pdb
 import datetime
+from PIL import Image 
 from utils import get_img_path_from_external_id
 
 logging.basicConfig(level=logging.INFO)
+Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
 def execute_command(command, if_print_command):
     t1 = time.time()
@@ -21,6 +23,12 @@ def execute_command(command, if_print_command):
     time_usage = t2 - t1 
     return time_usage
 
+def get_img_dimension(img_path):
+    map_img = Image.open(img_path) 
+    width, height = map_img.size 
+
+    return width, height
+
 
 def run_pipeline(args):
     # -------------------------  Pass arguments -----------------------------------------
@@ -30,6 +38,7 @@ def run_pipeline(args):
     expt_name = args.expt_name
     output_folder = args.output_folder
 
+    module_get_dimension = args.module_get_dimension
     module_gen_geotiff = args.module_gen_geotiff
     module_cropping = args.module_cropping
     module_text_spotting = args.module_text_spotting
@@ -57,7 +66,27 @@ def run_pipeline(args):
     stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc/')
     geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
 
-   
+    # ------------------------ Get image dimension ------------------------------
+    if module_get_dimension:
+        for index, record in sample_map_df.iterrows():
+            external_id = record.external_id
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+
+            if img_path == '/data/rumsey-jp2/162/12041157.jp2':
+                continue 
+
+            if img_path[-4:] == '.sid':
+                # convert sid to jpg
+                redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
+                img_path = redirected_path
+
+            width, height = get_img_dimension(img_path)
+            
+            time_usage_dict[external_id]['img_w'] = width
+            time_usage_dict[external_id]['img_h'] = height
+
+
     # ------------------------- Generate geotiff ------------------------------
     time_start =  time.time()
     if module_gen_geotiff:
@@ -143,7 +172,7 @@ def run_pipeline(args):
             #     continue
 
             stitch_input_dir = os.path.join(spotting_output_dir, map_name)
-            output_geojson = os.path(stitch_output_dir, map_name + '.geojson')
+            output_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
             
             run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson
             time_usage = execute_command(run_stitch_command, if_print_command)
@@ -224,6 +253,8 @@ def main():
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output')
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
     
+    
+    parser.add_argument('--module_get_dimension', default=False, action='store_true')
     parser.add_argument('--module_gen_geotiff', default=False, action='store_true')
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')

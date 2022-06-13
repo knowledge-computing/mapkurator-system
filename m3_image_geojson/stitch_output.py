@@ -19,7 +19,7 @@ def concatenate_and_convert_to_geojson(args):
     file_list = sorted(file_list)
     if len(file_list) == 0:
         logging.warning('No files found for %s' % map_subdir)
-        continue
+    
     map_data = []
     for file_path in file_list:
         patch_index_h, patch_index_w = os.path.basename(file_path).split('.')[0].split('_')
@@ -29,7 +29,7 @@ def concatenate_and_convert_to_geojson(args):
             df = pd.read_json(file_path)
         except pd.errors.EmptyDataError:
             logging.warning('%s is empty. Skipping.' % file_path)
-            continue
+            
 
         for index, line_data in df.iterrows():
             df['polygon_x'][index] = np.array(df['polygon_x'][index]) + shift_size * patch_index_w
