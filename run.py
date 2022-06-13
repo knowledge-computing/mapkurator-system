@@ -130,7 +130,7 @@ def run_pipeline(args):
 
     # ------------------------- Image coord geojson (map level) ------------------------------
     if module_img_geojson:
-        os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+        os.chdir(os.path.join(map_kurator_system_dir ,'m3_image_geojson'))
         if not os.path.isdir(stitch_output_dir):
             os.makedirs(stitch_output_dir)
 
