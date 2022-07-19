@@ -46,13 +46,21 @@ def run_pipeline(args):
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_entity_linking = args.module_entity_linking
 
+    spotter_option = args.spotter_option
+
     if_print_command = args.print_command
 
     sid_to_jpg_dir = '/data2/rumsey_sid_to_jpg/'
 
     # ------------------------- Read sample map list and prepare output dir ----------------
     input_csv_path = sample_map_path
-    sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
+    if input_csv_path[-4:] == '.csv':
+        sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
+    elif input_csv_path[-4:] == '.tsv':
+        sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str}, sep='\t')
+    else:
+        raise NotImplementedError
+
     external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
     
     
@@ -96,7 +104,8 @@ def run_pipeline(args):
             os.makedirs(geotiff_output_dir)
 
         run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
-        execute_command(run_geotiff_command, if_print_command)
+        time_usage = execute_command(run_geotiff_command, if_print_command)
+        time_usage_dict['external_id']['geotiff'] = time_usage
 
     time_geotiff = time.time()
     
@@ -146,7 +155,13 @@ def run_pipeline(args):
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
         
-            run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input='+ os.path.join(cropping_output_dir,map_name) + '  --output='+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+            if spotter_option == 'abcnet':
+                run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input='+ os.path.join(cropping_output_dir,map_name) + '  --output='+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+            elif spotter_option == 'testr':
+                run_spotting_command = 'python demo/demo.py --output_json	--input='+ os.path.join(cropping_output_dir,map_name) + ' --output='+map_spotting_output_dir +'   --opts MODEL.WEIGHTS icdar15_testr_R_50_polygon.pth'
+            else:
+                raise NotImplementedError
+            
             run_spotting_command  += ' 1> /dev/null'
             
             time_usage = execute_command(run_spotting_command, if_print_command)
@@ -198,7 +213,7 @@ def run_pipeline(args):
 
     # ------------------------- Link entities in OSM ------------------------------
     # To jina: 
-    # remember to change output dir (according to Line41)
+    # remember to change output dir (according to Line69-73)
     # time usage logging for each map - write to time_usage_df 
     #  -zekun
     if module_entity_linking:
@@ -261,6 +276,10 @@ def main():
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
+
+    parser.add_argument('--spotter_option', type=str, default='testr', 
+        choices=['abcnet', 'testr'], 
+        help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
 
     parser.add_argument('--print_command', default=False, action='store_true')
 

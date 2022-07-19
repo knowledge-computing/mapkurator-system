@@ -36,6 +36,7 @@ def main(args):
 
     for index, record in sample_map_df.iterrows():
         external_id = record.external_id
+        transform_method = record.transformation_method
         gcps = record.gcps
         filename_without_extension = external_id.strip("'").replace('.','')
 
@@ -44,21 +45,61 @@ def main(args):
             full_path = jp2_file_fullpath_dict[filename_without_extension]
         elif filename_without_extension in sid_file_fullpath_dict:
             full_path = sid_file_fullpath_dict[filename_without_extension]
+            # TODO: handle SID
+            # continue
         else:
             print('image with external_id not found in image_dir:', external_id)
             continue
         assert (len(full_path)!=0)
 
         gcps = ast.literal_eval(gcps)
+
         gcp_str = ''
         for gcp in gcps:
             lng, lat = gcp['location']
             x, y = gcp['pixel']
             gcp_str += '-gcp '+str(x) + ' ' + str(y) + ' ' + str(lng) + ' ' + str(lat) + ' '
         
-        gdal_command = 'gdal_translate -of Gtiff '+gcp_str + full_path + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'
+        # gdal_translate to add GCP to raw image
+        gdal_command = 'gdal_translate -of Gtiff '+gcp_str + full_path + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff'
         #print(gdal_command)
         os.system(gdal_command)
+        
+        
+        assert transform_method in ['affine','polynomial','tps']
+        
+            
+        # reprojection with gdal_warp
+        if transform_method == 'affine': 
+            # first order
+            
+            warp_command = 'gdalwarp -r near -order 1 -of GTiff ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            
+
+            
+        elif transform_method == 'polynomial':
+            # second order
+            warp_command = 'gdalwarp -r near -order 2 -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            # if full_path[-4:] =='.jp2':
+            #     os.system(warp_command)
+            #     # remove temporary tiff file
+            #     os.system('rm ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff')
+
+            #     exit(-1)
+            
+        elif transform_method == 'tps':
+            # Thin plate spline #debug/11558008.geotiff  #10057000.geotiff
+            warp_command = 'gdalwarp -r near -tps -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            
+            
+
+        else:
+            raise NotImplementedError
+
+        os.system(warp_command)
+        # remove temporary tiff file
+        os.system('rm ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff')
+
 
         logging.info('Done generating geotiff for %s', external_id)
 
