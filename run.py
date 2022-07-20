@@ -203,19 +203,21 @@ def run_pipeline(args):
         
         if not os.path.isdir(geojson_output_dir):
             os.makedirs(geojson_output_dir)
-        
-        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_dir '+ os.path.join(output_folder, stitch_output_dir) +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
-        execute_command(run_converter_command, if_print_command)
+
+        for index, record in sample_map_df.iterrows():
+            external_id = record.external_id
+            in_geojson = os.path.join(output_folder, stitch_output_dir) + external_id.strip("'").replace('.', '') + ".geojson"
+
+            if os.path.isfile(in_geojson):
+                run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
+                time_usage = execute_command(run_converter_command, if_print_command)
+                time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+            else:
+                continue
 
     time_geocoord_geojson = time.time()
 
-    
-
     # ------------------------- Link entities in OSM ------------------------------
-    # To jina: 
-    # remember to change output dir (according to Line69-73)
-    # time usage logging for each map - write to time_usage_df 
-    #  -zekun
     if module_entity_linking:
         os.chdir(os.path.join(map_kurator_system_dir, 'm5_entity_linker'))
         
