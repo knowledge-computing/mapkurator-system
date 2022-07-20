@@ -67,7 +67,7 @@ def run_pipeline(args):
     time_usage_dict = dict()
     for ex_id in sample_map_df['external_id']:
         time_usage_dict[ex_id] = {} #{'external_id':ex_id}
-    
+
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_outabc/')
@@ -204,7 +204,7 @@ def run_pipeline(args):
         if not os.path.isdir(geojson_output_dir):
             os.makedirs(geojson_output_dir)
         
-        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+stitch_output_dir +' --out_geojson_dir '+geojson_output_dir
+        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_dir '+ os.path.join(map_kurator_system_dir, stitch_output_dir) +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
         execute_command(run_converter_command, if_print_command)
 
     time_geocoord_geojson = time.time()

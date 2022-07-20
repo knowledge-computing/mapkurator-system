@@ -1,47 +1,52 @@
 import os
 import argparse
+import logging
 import ast
 
 import pandas as pd
 import numpy as np
 
-from rasterio.control import GroundControlPoint
-from rasterio.transform import from_gcps
-
-import geojson
-
+logging.basicConfig(level=logging.INFO)
 
 def main(args):
 
-    sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
-    geojson_files = os.listdir(args.in_geojson_dir)
+    input_dir = args.in_geojson_dir
+    output_dir = args.out_geojson_dir
 
+    sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '')
 
-    for geojson_file in geojson_files:
+    in_geojson_files = os.listdir(input_dir)
+    for geojson_file in in_geojson_files:
         row = sample_map_df[sample_map_df['external_id']==geojson_file.split(".")[0]]
-        if not row.empty and row.iloc[0]['transformation_method']=='affine':
+        if not row.empty:
             gcps = ast.literal_eval(row.iloc[0]['gcps'])
-
-            control_point = []
+            gcp_str = ''
             for gcp in gcps:
-                row, col = gcp['pixel']
                 lng, lat = gcp['location']
-                control_point.append(GroundControlPoint(float(col), float(row), float(lng), float(lat)))
-                # print(float(col), float(row), float(lng), float(lat))
-            transform = from_gcps(control_point)
+                x, y = gcp['pixel']
+                gcp_str += '-gcp ' + str(x) + ' ' + str(y) + ' ' + str(lng) + ' ' + str(lat) + ' '
 
-            with open(args.in_geojson_dir+geojson_file) as f:
-                data = geojson.load(f)
+            transform_method = row.iloc[0]['transformation_method']
+            assert transform_method in ['affine', 'polynomial', 'tps']
 
-            for feature_data in data['features']:
-                pts = np.array(feature_data['geometry']['coordinates'], dtype=np.int32).reshape(-1, 2)
-                pts[:, 1] = pts[:, 1]*-1
-                transformed_pts = np.apply_along_axis(lambda x: transform * x, axis=1, arr=pts)
-                feature_data['geometry']['coordinates'] = [transformed_pts.tolist()]
+            output = '"' + output_dir + geojson_file + '"'
+            input = '"' + input_dir + geojson_file + '"'
 
-            with open(args.out_geojson_dir+geojson_file, 'w') as output_geojson:
-                geojson.dump(data, output_geojson)
+            if transform_method == 'affine':
+                gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 ' + gcp_str
+
+            elif transformation_method == 'polynomial':
+                gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 2 ' + gcp_str
+
+            elif transformation_method == 'tps':
+                gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -tps ' + gcp_str
+
+            else:
+                raise NotImplementedError
+
+            os.system(gecoord_convert_command)
+            logging.info('Done generating geocoord geojson for %s', geojson_file)
 
 
 if __name__ == '__main__':
