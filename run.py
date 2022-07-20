@@ -204,7 +204,7 @@ def run_pipeline(args):
         if not os.path.isdir(geojson_output_dir):
             os.makedirs(geojson_output_dir)
         
-        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_dir '+ os.path.join(map_kurator_system_dir, stitch_output_dir) +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
+        run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_dir '+ os.path.join(output_folder, stitch_output_dir) +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
         execute_command(run_converter_command, if_print_command)
 
     time_geocoord_geojson = time.time()
