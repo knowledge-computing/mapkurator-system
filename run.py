@@ -70,9 +70,9 @@ def run_pipeline(args):
 
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_outabc/')
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc/')
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'crop_out_' + spotter_option)
+    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_'+'crop_out_' + spotter_option + '_geocoord/')
 
     # ------------------------ Get image dimension ------------------------------
     if module_get_dimension:

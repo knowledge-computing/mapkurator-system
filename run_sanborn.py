@@ -46,6 +46,10 @@ def run_pipeline(args):
     module_img_geojson = args.module_img_geojson 
     # module_geocoord_geojson = args.module_geocoord_geojson 
     # module_entity_linking = args.module_entity_linking
+    module_geocoding = args.module_geocoding
+
+    spotter_option = args.spotter_option
+
 
     if_print_command = args.print_command
 
@@ -62,8 +66,8 @@ def run_pipeline(args):
     
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_testr/')
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_testr/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option)
     # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
 
     # # ------------------------ Get image dimension ------------------------------
@@ -147,11 +151,13 @@ def run_pipeline(args):
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
 
-            # TESTR
-            run_spotting_command = 'python demo/demo.py --output_json	--input='+ os.path.join(cropping_output_dir,map_name) + ' --output='+map_spotting_output_dir +'   --opts MODEL.WEIGHTS icdar15_testr_R_50_polygon.pth'
+            if spotter_option == 'abcnet':
+                run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input='+ os.path.join(cropping_output_dir,map_name) + '  --output='+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
+            elif spotter_option == 'testr':
+                run_spotting_command = 'python demo/demo.py --output_json	--input='+ os.path.join(cropping_output_dir,map_name) + ' --output='+map_spotting_output_dir +'   --opts MODEL.WEIGHTS icdar15_testr_R_50_polygon.pth'
+            else:
+                raise NotImplementedError
 
-            # Previous ABCNet
-            # run_spotting_command = 'python demo/demo.py 	--config-file configs/BAText/CTW1500/attn_R_50.yaml 	--input='+ os.path.join(cropping_output_dir,map_name) + '  --output='+ map_spotting_output_dir + '   --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             run_spotting_command  += ' 1> /dev/null'
             
             time_usage = execute_command(run_spotting_command, if_print_command)
@@ -261,10 +267,15 @@ def main():
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
-    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
-    parser.add_argument('--module_entity_linking', default=False, action='store_true')
+    parser.add_argument('--module_geocoding', default=False, action='store_true')
+    # parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
+    # parser.add_argument('--module_entity_linking', default=False, action='store_true')
 
     parser.add_argument('--print_command', default=False, action='store_true')
+
+    parser.add_argument('--spotter_option', type=str, default='testr', 
+        choices=['abcnet', 'testr'], 
+        help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
 
                         
     args = parser.parse_args()
