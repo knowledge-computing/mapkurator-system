@@ -4,3 +4,4 @@ rumsey_output/
 .idea/
 .env
 MrSID*
+__pycache__
