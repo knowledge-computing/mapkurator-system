@@ -14,6 +14,7 @@ def concatenate_and_convert_to_geojson(args):
     map_subdir = args.input_dir
     output_geojson = args.output_geojson
     shift_size = args.shift_size
+    eval_bool = args.eval_only
 
     file_list = glob.glob(map_subdir + '/*.json')
     file_list = sorted(file_list)
@@ -41,8 +42,13 @@ def concatenate_and_convert_to_geojson(args):
     features = []
     for index, line_data in map_df.iterrows():
         polygon_x, polygon_y = list(line_data['polygon_x']), list(line_data['polygon_y'])
-        # y is kept to be positive.  Needs to be negative for QGIS visualization
-        polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
+        
+        if eval_bool ==  False: 
+             # y is kept to be positive.  Needs to be negative for QGIS visualization
+            polygon = Polygon([[[x,-y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], -polygon_y[0]]]])
+        else:
+            polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
+            
         text = line_data['text']
         score = line_data['score']
         features.append(Feature(geometry = polygon, properties={"text": text, "score": score} ))
@@ -67,6 +73,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--shift_size', type=int, default = 1000,
                         help='image patch size and shift size.')
+    
+    parser.add_argument('--eval_only', type=str, default = True,
+                        help='Persist image coordinate')
    
     args = parser.parse_args()
     print(args)
