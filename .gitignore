@@ -1,5 +1,8 @@
 data/
 data0/
+rumsey_output/
 .idea/
 .env
 MrSID*
+__pycache__
+debug/

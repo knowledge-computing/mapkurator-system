@@ -8,8 +8,9 @@ import numpy as np
 
 import geojson
 
+import sqlalchemy
 from sqlalchemy import create_engine
-# import reverse_geocode
+
 import geocoder
 from shapely.geometry import Polygon
 
@@ -59,7 +60,7 @@ def main(args):
                         intersect_df = pd.read_sql(query, con=conn)
                     except sqlalchemy.exc.InternalError:
                         continue
-                        
+
                     if not intersect_df.empty:
                         feature_data['properties']['osm_ogc_fid'] = intersect_df['ogc_fid'].values.tolist()
                     # else:
