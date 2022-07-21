@@ -5,3 +5,4 @@ rumsey_output/
 .env
 MrSID*
 __pycache__
+debug/

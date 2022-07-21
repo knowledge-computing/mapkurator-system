@@ -49,6 +49,9 @@ def run_pipeline(args):
     module_geocoding = args.module_geocoding
 
     spotter_option = args.spotter_option
+    geocoder_option = args.geocoder_option
+    api_key = args.api_key 
+    user_name = args.user_name
 
 
     if_print_command = args.print_command
@@ -56,11 +59,13 @@ def run_pipeline(args):
     sid_to_jpg_dir = '/data2/rumsey_sid_to_jpg/'
 
     file_list = os.listdir(input_map_dir)
+
+    file_list = [f for f in file_list if os.path.basename(f).split('.')[-1] in ['sid','jp2','png','jpg','jpeg','tiff','tif','geotiff','geotiff']]
+    
     print(len(file_list))
 
     # pdb.set_trace()
     # ------------------------- Read sample map list and prepare output dir ----------------
-    
     
     
     
@@ -69,6 +74,7 @@ def run_pipeline(args):
     spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option)
     # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
+    geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_' + spotter_option + '_' + geocoder_option)
 
     # # ------------------------ Get image dimension ------------------------------
     # if module_get_dimension:
@@ -109,6 +115,7 @@ def run_pipeline(args):
             print(img_path)
             # external_id = record.external_id
             # img_path = external_id_to_img_path_dict[external_id]
+            
             map_name = os.path.basename(img_path).split('.')[0]
             
             # if img_path[-4:] == '.sid':
@@ -186,6 +193,28 @@ def run_pipeline(args):
 
     time_img_geojson = time.time()
 
+    # # ------------------------- Geocoding ------------------------------
+    if module_geocoding:
+        os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+
+        if not os.path.isdir(geocoding_output_dir):
+            os.makedirs(geocoding_output_dir)
+
+        for file_path in file_list:
+            map_name = os.path.basename(file_path).split('.')[0]
+
+            run_geocoding_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
+                ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option 
+            
+            time_usage = execute_command(run_geocoding_command, if_print_command)
+
+            # break
+
+
+        logging.info('Done geocoding for %s', map_name)
+
+    
+    time_geocoding = time.time()
     
 
     # # ------------------------- Convert image coordinates to geocoordinates ------------------------------
@@ -256,20 +285,19 @@ def main():
     parser.add_argument('--map_kurator_system_dir', type=str, default='/home/zekun/dr_maps/mapkurator-system/')
     parser.add_argument('--text_spotting_model_dir', type=str, default='/home/zekun/antique_names/model/AdelaiDet/')
     
+    parser.add_argument('--input_map_dir', type=str, default='/data2/sanborn_maps/LA_sanborn')
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output')
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
 
-    parser.add_argument('--input_map_dir', type=str, default='/data2/sanborn_maps/LA_sanborn')
-    
     
     parser.add_argument('--module_get_dimension', default=False, action='store_true')
-    parser.add_argument('--module_gen_geotiff', default=False, action='store_true')
+    parser.add_argument('--module_gen_geotiff', default=False, action='store_true') # only supports dr maps
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
-    parser.add_argument('--module_geocoding', default=False, action='store_true')
-    # parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
-    # parser.add_argument('--module_entity_linking', default=False, action='store_true')
+    parser.add_argument('--module_geocoding', default=False, action='store_true') # only supports sanborn
+    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true') # only supports dr maps
+    parser.add_argument('--module_entity_linking', default=False, action='store_true') # only supports dr maps
 
     parser.add_argument('--print_command', default=False, action='store_true')
 
@@ -277,6 +305,13 @@ def main():
         choices=['abcnet', 'testr'], 
         help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
 
+    parser.add_argument('--geocoder_option', type=str, default='arcgis', 
+        choices=['arcgis', 'google','geonames'], 
+        help='Select text spotting model option from ["arcgis","google","geonames"]') # select text spotting model
+
+    # params for geocoder:
+    parser.add_argument('--api_key', type=str, default=None, help='api_key for geocoder. can be None if not running geocoding module')
+    parser.add_argument('--user_name', type=str, default=None, help='user_name for geocoder. can be None if not running geocoding module')
                         
     args = parser.parse_args()
     print('\n')

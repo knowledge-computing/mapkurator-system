@@ -34,8 +34,6 @@ def geonames_geocoding(place_name, user_name = None, maxRows = 5):
         print(e)
         return -1
         
-    
-    
 
 def geocoding(args):
     output_folder = args.output_folder
@@ -50,6 +48,10 @@ def geocoding(args):
 
     map_name = os.path.basename(input_map_geojson_path).split('.')[0]
     output_folder = os.path.join(output_folder, geocoder_option)
+
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+
     output_path = os.path.join(output_folder, map_name) + '.json'
 
     with open(output_path, 'w') as f:
