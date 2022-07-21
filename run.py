@@ -49,6 +49,8 @@ def run_pipeline(args):
     spotter_option = args.spotter_option
 
     if_print_command = args.print_command
+    
+    
 
     sid_to_jpg_dir = '/data2/rumsey_sid_to_jpg/'
 
@@ -62,8 +64,7 @@ def run_pipeline(args):
         raise NotImplementedError
 
     external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
-    
-    
+
     time_usage_dict = dict()
     for ex_id in sample_map_df['external_id']:
         time_usage_dict[ex_id] = {} #{'external_id':ex_id}
@@ -93,8 +94,8 @@ def run_pipeline(args):
             
             time_usage_dict[external_id]['img_w'] = width
             time_usage_dict[external_id]['img_h'] = height
-
-
+            
+            
     # ------------------------- Generate geotiff ------------------------------
     time_start =  time.time()
     if module_gen_geotiff:
@@ -105,7 +106,9 @@ def run_pipeline(args):
 
         run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
         time_usage = execute_command(run_geotiff_command, if_print_command)
-        time_usage_dict['external_id']['geotiff'] = time_usage
+        
+        time_usage_dict[external_id]['geotiff'] = time_usage
+        
 
     time_geotiff = time.time()
     
@@ -120,7 +123,7 @@ def run_pipeline(args):
             if img_path[-4:] == '.sid':
                 # convert sid to jpg
                 redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-
+                
                 mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
 
                 run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
@@ -133,10 +136,13 @@ def run_pipeline(args):
             os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
             if not os.path.isdir(cropping_output_dir):
                 os.makedirs(cropping_output_dir)
+            
             run_crop_command = 'python crop_img.py --img_path '+img_path + ' --output_dir '+ cropping_output_dir
 
             time_usage = execute_command(run_crop_command, if_print_command)
             time_usage_dict[external_id]['cropping'] = time_usage
+            
+            
 
     time_cropping = time.time()
     
@@ -198,7 +204,7 @@ def run_pipeline(args):
     time_img_geojson = time.time()
 
     
-
+    
     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
     if module_geocoord_geojson:
         os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
@@ -208,8 +214,8 @@ def run_pipeline(args):
 
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
-            in_geojson = os.path.join(output_folder, stitch_output_dir) + external_id.strip("'").replace('.', '') + ".geojson"
-
+            in_geojson = os.path.join(output_folder, stitch_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
+            
             if os.path.isfile(in_geojson):
                 run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
                 time_usage = execute_command(run_converter_command, if_print_command)
@@ -266,10 +272,10 @@ def run_pipeline(args):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--map_kurator_system_dir', type=str, default='/home/zekun/dr_maps/mapkurator-system/')
-    parser.add_argument('--text_spotting_model_dir', type=str, default='/home/zekun/antique_names/model/AdelaiDet/')
-    parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv')
-    parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output')
+    parser.add_argument('--map_kurator_system_dir', type=str, default='/home/maplord/rumsey/mapkurator-system/')
+    parser.add_argument('--text_spotting_model_dir', type=str, default='/home/maplord/rumsey/TESTR/')
+    parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv') # Original: sample_US_jp2_100_maps.csv
+    parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output') # Original: /data2/rumsey_output
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
     
     
