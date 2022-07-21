@@ -133,7 +133,7 @@ def run_pipeline(args):
     
     # ------------------------- Text Spotting (patch level) ------------------------------
     if module_text_spotting:
-        os.chdir(text_spotting_model_dir)
+        os.chdir(text_spotting_model_dir) 
 
         for index, record in sample_map_df.iterrows():
 
