@@ -75,7 +75,7 @@ if __name__ == '__main__':
                         help='image patch size and shift size.')
     
     parser.add_argument('--eval_only', type=str, default = True,
-                        help='Persist image coordinate')
+                        help='keep positive coordinate')
    
     args = parser.parse_args()
     print(args)
