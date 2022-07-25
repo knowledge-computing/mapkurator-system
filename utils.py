@@ -74,7 +74,7 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
         external_id = record.external_id 
         image_no = record.image_no
         # filename_without_extension = external_id.strip("'").replace('.','')
-        filename_without_extension = image_no.strip("'").replace('.','')
+        filename_without_extension = image_no.strip("'").split('.')[0]
 
         full_path = ''
         if filename_without_extension in jp2_file_fullpath_dict:
@@ -111,5 +111,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    get_img_path_from_external_id(jp2_root_dir = args.jp2_root_dir, sid_root_dir = args.sid_root_dir, additional_root_dir = args.additional_root_dir,
+    # get_img_path_from_external_id(jp2_root_dir = args.jp2_root_dir, sid_root_dir = args.sid_root_dir, additional_root_dir = args.additional_root_dir,
+    # sample_map_path = args.sample_map_path,external_id_key = args.external_id_key)
+
+    get_img_path_from_external_id_and_image_no(jp2_root_dir = args.jp2_root_dir, sid_root_dir = args.sid_root_dir, additional_root_dir = args.additional_root_dir,
      sample_map_path = args.sample_map_path,external_id_key = args.external_id_key)
