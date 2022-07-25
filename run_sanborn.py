@@ -74,7 +74,7 @@ def run_pipeline(args):
     spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option)
     # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
-    geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_' + spotter_option + '_' + geocoder_option)
+    geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_' + spotter_option)
 
     # # ------------------------ Get image dimension ------------------------------
     # if module_get_dimension:

@@ -3,6 +3,7 @@ import argparse
 import geojson
 import geocoder
 import json
+import time
 import pdb
 
 
@@ -29,6 +30,8 @@ def google_geocoding(place_name, api_key = None, maxRows = 5):
 def geonames_geocoding(place_name, user_name = None, maxRows = 5):
     try:
         response = geocoder.geonames(place_name, key = user_name,  maxRows=maxRows)
+        # hourly limit of 1000 credits
+        time.sleep(4)
         return response.json
     except exception as e:
         print(e)

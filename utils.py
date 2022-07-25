@@ -16,19 +16,15 @@ def func_file_to_fullpath_dict(file_path_list):
 
     return file_fullpath_dict  
 
-def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', sample_map_path = None,external_id_key = 'external_id') :
-
-    # jp2_root_dir = args.jp2_root_dir
-    # sid_root_dir = args.sid_root_dir
-
-    # sample_map_path = args.sample_map_path
-    # external_id_key = args.external_id_key
+def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
+    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*/*'))
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
     sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
+    add_file_fullpath_dict = func_file_to_fullpath_dict(add_file_path_list) 
 
     sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
 
@@ -36,6 +32,39 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
     for index, record in sample_map_df.iterrows():
         external_id = record.external_id
         filename_without_extension = external_id.strip("'").replace('.','')
+
+        full_path = ''
+        if filename_without_extension in jp2_file_fullpath_dict:
+            full_path = jp2_file_fullpath_dict[filename_without_extension]
+        elif filename_without_extension in sid_file_fullpath_dict:
+            full_path = sid_file_fullpath_dict[filename_without_extension]
+        else:
+            print('image with external_id not found in image_dir:', external_id)
+            continue
+        assert (len(full_path)!=0)
+
+        external_id_to_img_path_dict[external_id] = full_path
+    
+    return external_id_to_img_path_dict
+
+def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
+
+    jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
+    sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
+    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*/*'))
+
+    jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
+    sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
+    add_file_fullpath_dict = func_file_to_fullpath_dict(add_file_path_list) 
+
+    sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
+
+    external_id_to_img_path_dict = {}
+    for index, record in sample_map_df.iterrows():
+        external_id = record.external_id 
+        image_no = record.image_no
+        # filename_without_extension = external_id.strip("'").replace('.','')
+        filename_without_extension = image_no.strip("'").replace('.','')
 
         full_path = ''
         if filename_without_extension in jp2_file_fullpath_dict:
@@ -59,6 +88,8 @@ if __name__ == '__main__':
                         help='image dir of jp2 files.')
     parser.add_argument('--sid_root_dir', type=str, default='/data/rumsey-sid/',
                         help='image dir of sid files.')
+    parser.add_argument('--additional_root_dir', type=str, default='/data2/rumsey-luna-img/',
+                        help='image dir of additional luna files.')
     parser.add_argument('--sample_map_path', type=str, default='data/initial_US_100_maps.csv',
                         help='path to sample map csv, which contains gcps info')
     parser.add_argument('--external_id_key', type=str, default='external_id',
@@ -67,4 +98,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    get_img_path_from_external_id(jp2_root_dir = args.jp2_root_dir, sid_root_dir = args.sid_root_dir, sample_map_path = args.sample_map_path,external_id_key = args.external_id_key)
+    get_img_path_from_external_id(jp2_root_dir = args.jp2_root_dir, sid_root_dir = args.sid_root_dir, additional_root_dir = args.additional_root_dir,
+     sample_map_path = args.sample_map_path,external_id_key = args.external_id_key)
