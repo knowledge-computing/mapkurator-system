@@ -42,6 +42,8 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
             full_path = jp2_file_fullpath_dict[filename_without_extension]
         elif filename_without_extension in sid_file_fullpath_dict:
             full_path = sid_file_fullpath_dict[filename_without_extension]
+        elif filename_without_extension in add_file_fullpath_dict:
+            full_path = add_file_fullpath_dict[filename_without_extension]
         else:
             print('image with external_id not found in image_dir:', external_id)
             unmatched_external_id_list.append(external_id)
@@ -79,6 +81,8 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
             full_path = jp2_file_fullpath_dict[filename_without_extension]
         elif filename_without_extension in sid_file_fullpath_dict:
             full_path = sid_file_fullpath_dict[filename_without_extension]
+        elif filename_without_extension in add_file_fullpath_dict:
+            full_path = add_file_fullpath_dict[filename_without_extension]
         else:
             print('image with external_id not found in image_dir:', external_id)
             unmatched_external_id_list.append(external_id)
