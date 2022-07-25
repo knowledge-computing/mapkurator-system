@@ -17,6 +17,7 @@ def func_file_to_fullpath_dict(file_path_list):
     return file_fullpath_dict  
 
 def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
+    # returns (1) a dict with external-id as key, full image path as value (2) list of external-id that can not find image path
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
@@ -29,6 +30,9 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
     sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
 
     external_id_to_img_path_dict = {}
+
+    unmatched_external_id_list = []
+
     for index, record in sample_map_df.iterrows():
         external_id = record.external_id
         filename_without_extension = external_id.strip("'").replace('.','')
@@ -40,14 +44,16 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
             full_path = sid_file_fullpath_dict[filename_without_extension]
         else:
             print('image with external_id not found in image_dir:', external_id)
+            unmatched_external_id_list.append(external_id)
             continue
         assert (len(full_path)!=0)
 
         external_id_to_img_path_dict[external_id] = full_path
     
-    return external_id_to_img_path_dict
+    return external_id_to_img_path_dict,  unmatched_external_id_list
 
 def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
+    # returns (1) a dict with external-id as key, full image path as value (2) list of external-id that can not find image path
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
@@ -60,6 +66,8 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
     sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
 
     external_id_to_img_path_dict = {}
+
+    unmatched_external_id_list = []
     for index, record in sample_map_df.iterrows():
         external_id = record.external_id 
         image_no = record.image_no
@@ -73,12 +81,13 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
             full_path = sid_file_fullpath_dict[filename_without_extension]
         else:
             print('image with external_id not found in image_dir:', external_id)
+            unmatched_external_id_list.append(external_id)
             continue
         assert (len(full_path)!=0)
 
         external_id_to_img_path_dict[external_id] = full_path
     
-    return external_id_to_img_path_dict
+    return external_id_to_img_path_dict, unmatched_external_id_list
 
 
 if __name__ == '__main__':

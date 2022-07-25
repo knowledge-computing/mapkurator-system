@@ -7,7 +7,7 @@ import pandas as pd
 import pdb
 import datetime
 from PIL import Image 
-from utils import get_img_path_from_external_id
+from utils import get_img_path_from_external_id, get_img_path_from_external_id_and_image_no
 
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
@@ -64,7 +64,8 @@ def run_pipeline(args):
     else:
         raise NotImplementedError
 
-    external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
+    # external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
+    external_id_to_img_path_dict, unmatched_external_id_list = get_img_path_from_external_id_and_image_no( sample_map_path = input_csv_path)
 
     time_usage_dict = dict()
     for ex_id in sample_map_df['external_id']:
