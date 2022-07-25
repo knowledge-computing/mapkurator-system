@@ -21,7 +21,7 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
-    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*/*'))
+    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*'))
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
     sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
@@ -59,7 +59,7 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
-    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*/*'))
+    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*'))
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
     sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
