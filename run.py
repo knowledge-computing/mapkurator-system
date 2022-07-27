@@ -86,7 +86,7 @@ def run_pipeline(args):
     if not os.path.isdir(expt_out_dir):
         os.makedirs(expt_out_dir)
 
-    # ------------------------ Get image dimension and convert SID to jpg if necessary ------------------------------
+    # ------------------------ Get image dimension  ------------------------------
     if module_get_dimension:
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
@@ -135,21 +135,8 @@ def run_pipeline(args):
             external_id = record.external_id
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
-            
-            # if img_path[-4:] == '.sid':
-            #     # convert sid to jpg
-            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-                
-            #     mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
-
-            #     run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
-            #     time_usage = execute_command(run_sid_to_jpg_command, if_print_command)
-            #     time_usage_dict[external_id]['conversion'] = time_usage
-
-            #     img_path = redirected_path
 
             if img_path[-4:] == '.sid':
-                # convert sid to jpg
                 redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
                 img_path = redirected_path
                 
@@ -269,9 +256,7 @@ def run_pipeline(args):
     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
 
-    m_time = os.path.getmtime(time_usage_log_path)
-    dt_m = datetime.datetime.fromtimestamp(m_time)
-    timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
+    
 
     # check if exist time_usage log file 
     if os.path.isfile(time_usage_log_path):
@@ -282,18 +267,22 @@ def run_pipeline(args):
         time_usage_df = time_usage_df.join(existing_df[cols_to_use])
 
         # make sure time_usage_expt_name.csv always have the latest time usage
-        # (maybe better to use the old time_usage.csv file creation time instead)
+        # move the old time_usage.csv to time_usage[timestamp].csv where timestamp is the last expt running time
+        m_time = os.path.getmtime(time_usage_log_path)
+        dt_m = datetime.datetime.fromtimestamp(m_time)
+        timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
+
         deprecated_path = os.path.join(output_folder, expt_name, 'time_usage_' +  timestr +'.csv')
         run_command = 'mv ' + time_usage_log_path + ' ' + deprecated_path
         execute_command(run_command, if_print_command)
 
     time_usage_df.to_csv(time_usage_log_path, index_label='external_id')
 
-
     # --------------------- Error logging --------------------------
     print('\n')
+    current_time = datetime.datetime.now().strftime("%Y_%m_%d-%I:%M:%S_%p")
     error_reason_df = pd.DataFrame.from_dict(error_reason_dict, orient='index')
-    error_reason_log_path = os.path.join(output_folder, expt_name, 'error_reason_' +  timestr +'.csv')
+    error_reason_log_path = os.path.join(output_folder, expt_name, 'error_reason_' +  current_time +'.csv')
     error_reason_df.to_csv(error_reason_log_path, index_label='external_id')
 
 
