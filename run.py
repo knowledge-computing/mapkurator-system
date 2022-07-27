@@ -100,18 +100,6 @@ def run_pipeline(args):
 
             if img_path[-4:] == '.sid':
                 redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-
-                # if not os.path.isfile(redirected_path): # if haven't converted before, do the conversion
-                #     pdb.set_trace()
-                #     print('SID convertion to JPG for:', map_name)
-
-                #     mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
-
-                #     run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
-                #     time_usage = execute_command(run_sid_to_jpg_command, if_print_command)
-                #     time_usage_dict[external_id]['conversion'] = time_usage
-                # else:
-                #     pass
                 img_path = redirected_path
 
             try:
