@@ -133,6 +133,11 @@ def run_pipeline(args):
     if module_cropping:
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
+
+            if external_id not in external_id_to_img_path_dict:
+                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                 continue 
+
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
@@ -147,9 +152,12 @@ def run_pipeline(args):
             
             run_crop_command = 'python crop_img.py --img_path '+img_path + ' --output_dir '+ cropping_output_dir
 
-            time_usage = execute_command(run_crop_command, if_print_command)
-            time_usage_dict[external_id]['cropping'] = time_usage
-            
+            try:
+                time_usage = execute_command(run_crop_command, if_print_command)
+                time_usage_dict[external_id]['cropping'] = time_usage
+            except Exception as e:
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
+
             
     time_cropping = time.time()
     
@@ -160,6 +168,10 @@ def run_pipeline(args):
         for index, record in sample_map_df.iterrows():
 
             external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                 continue 
+
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
@@ -176,8 +188,11 @@ def run_pipeline(args):
             
             run_spotting_command  += ' 1> /dev/null'
             
-            time_usage = execute_command(run_spotting_command, if_print_command)
-            time_usage_dict[external_id]['spotting'] = time_usage
+            try:
+                time_usage = execute_command(run_spotting_command, if_print_command)
+                time_usage_dict[external_id]['spotting'] = time_usage
+            except Exception as e:
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
 
             logging.info('Done text spotting for %s', map_name)
 
@@ -194,22 +209,25 @@ def run_pipeline(args):
 
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                 continue 
+
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
-
-            # if img_path[-4:] == '.sid':
-            #     continue
 
             stitch_input_dir = os.path.join(spotting_output_dir, map_name)
             output_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
             
             run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson +' --eval_only '+ eval_only
-            time_usage = execute_command(run_stitch_command, if_print_command)
-            time_usage_dict[external_id]['imgcoord_geojson'] = time_usage
-
+            try:
+                time_usage = execute_command(run_stitch_command, if_print_command)
+                time_usage_dict[external_id]['imgcoord_geojson'] = time_usage
+            except Exception as e:
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
+            
     time_img_geojson = time.time()
 
-    
     
     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
     if module_geocoord_geojson:
@@ -220,6 +238,10 @@ def run_pipeline(args):
 
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                 continue 
+
             in_geojson = os.path.join(output_folder, stitch_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
             
             if os.path.isfile(in_geojson):
@@ -257,7 +279,6 @@ def run_pipeline(args):
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
 
     
-
     # check if exist time_usage log file 
     if os.path.isfile(time_usage_log_path):
         existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})
@@ -294,7 +315,6 @@ def main():
     parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv') # Original: sample_US_jp2_100_maps.csv
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output') # Original: /data2/rumsey_output
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
-    
     
     parser.add_argument('--module_get_dimension', default=False, action='store_true')
     parser.add_argument('--module_gen_geotiff', default=False, action='store_true')
