@@ -104,11 +104,8 @@ def run_pipeline(args):
                     time_usage_dict[external_id]['conversion'] = time_usage
                 else:
                     pass
-
                 img_path = redirected_path
 
-            # if img_path == '/data/rumsey-jp2/162/12041157.jp2':
-            #     continue 
             try:
                 width, height = get_img_dimension(img_path)
             except Exception as e:
@@ -126,7 +123,8 @@ def run_pipeline(args):
         if not os.path.isdir(geotiff_output_dir):
             os.makedirs(geotiff_output_dir)
 
-        run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
+        # use converted jpg folder instead of original sid folder
+        run_geotiff_command = 'python convert_image_to_geotiff.py --sid_root_dir /data2/rumsey_sid_to_jpg/ --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
         time_usage = execute_command(run_geotiff_command, if_print_command)
         
         time_usage_dict[external_id]['geotiff'] = time_usage
