@@ -76,34 +76,42 @@ def run_pipeline(args):
     for ex_id in sample_map_df['external_id']:
         time_usage_dict[ex_id] = {} 
 
+    expt_out_dir = os.path.join(output_folder, expt_name)
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'crop_out_' + spotter_option)
     geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_'+'crop_out_' + spotter_option + '_geocoord/')
 
+    if not os.path.isdir(expt_out_dir):
+        os.makedirs(expt_out_dir)
+
     # ------------------------ Get image dimension and convert SID to jpg if necessary ------------------------------
     if module_get_dimension:
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
+            # pdb.set_trace()
+            if external_id not in external_id_to_img_path_dict:
+                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                 continue 
+
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
             if img_path[-4:] == '.sid':
-                # convert sid to jpg
                 redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
 
-                if not os.path.isfile(redirected_path): # if haven't converted before, do the conversion
-                    pdb.set_trace()
-                    print('SID convertion to JPG for:', map_name)
+                # if not os.path.isfile(redirected_path): # if haven't converted before, do the conversion
+                #     pdb.set_trace()
+                #     print('SID convertion to JPG for:', map_name)
 
-                    mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
+                #     mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
 
-                    run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
-                    time_usage = execute_command(run_sid_to_jpg_command, if_print_command)
-                    time_usage_dict[external_id]['conversion'] = time_usage
-                else:
-                    pass
+                #     run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
+                #     time_usage = execute_command(run_sid_to_jpg_command, if_print_command)
+                #     time_usage_dict[external_id]['conversion'] = time_usage
+                # else:
+                #     pass
                 img_path = redirected_path
 
             try:
@@ -273,7 +281,10 @@ def run_pipeline(args):
     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
 
-    
+    m_time = os.path.getmtime(time_usage_log_path)
+    dt_m = datetime.datetime.fromtimestamp(m_time)
+    timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
+
     # check if exist time_usage log file 
     if os.path.isfile(time_usage_log_path):
         existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})
@@ -283,10 +294,7 @@ def run_pipeline(args):
         time_usage_df = time_usage_df.join(existing_df[cols_to_use])
 
         # make sure time_usage_expt_name.csv always have the latest time usage
-        m_time = os.path.getmtime(time_usage_log_path)
-        dt_m = datetime.datetime.fromtimestamp(m_time)
-        # get the current time (maybe better to use the file creation time instead)
-        timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
+        # (maybe better to use the old time_usage.csv file creation time instead)
         deprecated_path = os.path.join(output_folder, expt_name, 'time_usage_' +  timestr +'.csv')
         run_command = 'mv ' + time_usage_log_path + ' ' + deprecated_path
         execute_command(run_command, if_print_command)
