@@ -35,10 +35,10 @@ def main(args):
         if transform_method == 'affine':
             gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 ' + gcp_str
 
-        elif transformation_method == 'polynomial':
+        elif transform_method == 'polynomial':
             gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 2 ' + gcp_str
 
-        elif transformation_method == 'tps':
+        elif transform_method == 'tps':
             gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -tps ' + gcp_str
 
         else:
