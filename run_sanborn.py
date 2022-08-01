@@ -211,11 +211,12 @@ def run_pipeline(args):
 
             if metadata_tsv_path is not None:
                 suffix = map_df[map_df['filename'] == map_name]['City'].values[0] # LoC sanborn
+                suffix = ', ' + suffix
             else:
                 suffix = ', Los Angeles' # LA sanborn
 
             run_geocoding_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
-                ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix=' + suffix
+                ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix="' + suffix + '"'
             
             time_usage = execute_command(run_geocoding_command, if_print_command)
 
