@@ -53,6 +53,7 @@ def run_pipeline(args):
     api_key = args.api_key 
     user_name = args.user_name
 
+    metadata_tsv_path = args.metadata_tsv_path
 
     if_print_command = args.print_command
 
@@ -64,6 +65,8 @@ def run_pipeline(args):
     
     print(len(file_list))
 
+    
+
     # pdb.set_trace()
     # ------------------------- Read sample map list and prepare output dir ----------------
     
@@ -74,7 +77,7 @@ def run_pipeline(args):
     spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option)
     # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
-    geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_' + spotter_option)
+    geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_suffix_' + spotter_option)
 
     # # ------------------------ Get image dimension ------------------------------
     # if module_get_dimension:
@@ -197,14 +200,22 @@ def run_pipeline(args):
     if module_geocoding:
         os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
 
+        if metadata_tsv_path is not None:
+            map_df = pd.read_csv(metadata_tsv_path, sep='\t')
+
         if not os.path.isdir(geocoding_output_dir):
             os.makedirs(geocoding_output_dir)
 
         for file_path in file_list:
             map_name = os.path.basename(file_path).split('.')[0]
 
+            if metadata_tsv_path is not None:
+                suffix = map_df[map_df['filename'] == map_name]['City'].values[0] # LoC sanborn
+            else:
+                suffix = ', Los Angeles' # LA sanborn
+
             run_geocoding_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
-                ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option 
+                ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix=' + suffix
             
             time_usage = execute_command(run_geocoding_command, if_print_command)
 
@@ -312,7 +323,9 @@ def main():
     # params for geocoder:
     parser.add_argument('--api_key', type=str, default=None, help='api_key for geocoder. can be None if not running geocoding module')
     parser.add_argument('--user_name', type=str, default=None, help='user_name for geocoder. can be None if not running geocoding module')
-                        
+    parser.add_argument('--metadata_tsv_path', type=str, default=None) # '/home/zekun/Sanborn/Sheet_List.tsv'
+
+
     args = parser.parse_args()
     print('\n')
     print(args)

@@ -45,6 +45,7 @@ def geocoding(args):
     user_name = args.user_name
     geocoder_option = args.geocoder_option
     max_results = args.max_results
+    suffix = args.suffix
 
     with open(input_map_geojson_path, 'r') as f:
         data = geojson.load(f)
@@ -65,6 +66,9 @@ def geocoding(args):
         geometry = feature['geometry']
         text = feature['properties']['text']
         score = feature['properties']['score']
+
+        # suffix = ', Los Angeles'
+        text = text + suffix
 
         print(text)
 
@@ -96,6 +100,8 @@ def main():
     parser.add_argument('--input_map_geojson_path', type=str, default='/data2/sanborn_maps_output/LA_sanborn/geojson_testr/service-gmd-gmd436m-g4364m-g4364lm-g4364lm_g00656189401-00656_01_1894-0001l.geojson')
     parser.add_argument('--api_key', type=str, default=None, help='Specify API key if needed')
     parser.add_argument('--user_name', type=str, default=None, help='Specify user name if needed')
+
+    parser.add_argument('--suffix', type=str, default=None, help='placename suffix (e.g. city name)')
     
     parser.add_argument('--max_results', type=int, default=5, help='max number of results returend by geocoder')
 
