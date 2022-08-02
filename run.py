@@ -52,7 +52,7 @@ def run_pipeline(args):
     if_print_command = args.print_command
     
 
-    sid_to_jpg_dir = '/data2/rumsey_sid_to_jpg/'
+    # sid_to_jpg_dir = '/data2/rumsey_sid_to_jpg/'
 
     # ------------------------- Read sample map list and prepare output dir ----------------
     input_csv_path = sample_map_path
@@ -98,9 +98,9 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            if img_path[-4:] == '.sid':
-                redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-                img_path = redirected_path
+            # if img_path[-4:] == '.sid':
+            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
+            #     img_path = redirected_path
 
             try:
                 width, height = get_img_dimension(img_path)
@@ -141,9 +141,9 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            if img_path[-4:] == '.sid':
-                redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-                img_path = redirected_path
+            # if img_path[-4:] == '.sid':
+            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
+            #     img_path = redirected_path
                 
 
             os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
@@ -278,7 +278,6 @@ def run_pipeline(args):
     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
 
-    
     # check if exist time_usage log file 
     if os.path.isfile(time_usage_log_path):
         existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})

@@ -54,7 +54,7 @@ def get_img_path_from_external_id(jp2_root_dir = '/data/rumsey-jp2/', sid_root_d
     
     return external_id_to_img_path_dict,  unmatched_external_id_list
 
-def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data/rumsey-sid/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
+def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/', sid_root_dir = '/data2/rumsey_sid_to_jpg/', additional_root_dir='/data2/rumsey-luna-img/', sample_map_path = None,external_id_key = 'external_id') :
     # returns (1) a dict with external-id as key, full image path as value (2) list of external-id that can not find image path
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--jp2_root_dir', type=str, default='/data/rumsey-jp2/',
                         help='image dir of jp2 files.')
-    parser.add_argument('--sid_root_dir', type=str, default='/data/rumsey-sid/',
+    parser.add_argument('--sid_root_dir', type=str, default='/data2/rumsey_sid_to_jpg/',
                         help='image dir of sid files.')
     parser.add_argument('--additional_root_dir', type=str, default='/data2/rumsey-luna-img/',
                         help='image dir of additional luna files.')

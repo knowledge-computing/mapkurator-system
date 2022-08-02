@@ -26,7 +26,7 @@ def main(args):
     external_id_key = args.external_id_key
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
-    sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
+    sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*.jpg')) # use converted jpg directly
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
     sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
@@ -45,8 +45,6 @@ def main(args):
             full_path = jp2_file_fullpath_dict[filename_without_extension]
         elif filename_without_extension in sid_file_fullpath_dict:
             full_path = sid_file_fullpath_dict[filename_without_extension]
-            # TODO: handle SID
-            # continue
         else:
             print('image with external_id not found in image_dir:', external_id)
             continue
