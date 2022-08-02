@@ -68,7 +68,7 @@ def geocoding(args):
         score = feature['properties']['score']
 
         # suffix = ', Los Angeles'
-        text = text + suffix
+        text = str(text) + suffix
 
         print(text)
 

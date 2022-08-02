@@ -208,7 +208,6 @@ def run_pipeline(args):
 
         for file_path in file_list:
             map_name = os.path.basename(file_path).split('.')[0]
-
             if metadata_tsv_path is not None:
                 suffix = map_df[map_df['filename'] == map_name]['City'].values[0] # LoC sanborn
                 suffix = ', ' + suffix
@@ -333,7 +332,6 @@ def main():
     print('\n')
 
     run_pipeline(args)
-
 
 
 if __name__ == '__main__':
