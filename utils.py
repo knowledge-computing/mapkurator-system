@@ -58,7 +58,7 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
     # returns (1) a dict with external-id as key, full image path as value (2) list of external-id that can not find image path
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
-    sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*/*.sid'))
+    sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*.jpg')) # use converted jpg directly
     add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*'))
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
