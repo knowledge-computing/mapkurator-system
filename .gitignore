@@ -6,3 +6,4 @@ rumsey_output/
 MrSID*
 __pycache__
 debug/
+.ipynb_checkpoints/
