@@ -46,9 +46,10 @@ def run_pipeline(args):
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_entity_linking = args.module_entity_linking
 
-    spotter_option = args.spotter_option
+    spotter_model = args.spotter_model
     spotter_config = args.spotter_config
-
+    spotter_expt_name = args.spotter_expt_name
+    
     if_print_command = args.print_command
     
 
@@ -79,9 +80,9 @@ def run_pipeline(args):
     expt_out_dir = os.path.join(output_folder, expt_name)
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'crop_out_' + spotter_option)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_'+'crop_out_' + spotter_option + '_geocoord/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'spottor/' + spotter_expt_name)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
+    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_'+'crop_out_' + spotter_expt_name + '_geocoord/')
 
     if not os.path.isdir(expt_out_dir):
         os.makedirs(expt_out_dir)
@@ -92,8 +93,8 @@ def run_pipeline(args):
             external_id = record.external_id
             # pdb.set_trace()
             if external_id not in external_id_to_img_path_dict:
-                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                 continue 
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
@@ -135,8 +136,8 @@ def run_pipeline(args):
             external_id = record.external_id
 
             if external_id not in external_id_to_img_path_dict:
-                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                 continue 
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
@@ -163,26 +164,27 @@ def run_pipeline(args):
     
     # ------------------------- Text Spotting (patch level) ------------------------------
     if module_text_spotting:
+        assert os.path.exists(spotter_config), "Config file for spotter must exist!"
         os.chdir(text_spotting_model_dir) 
 
         for index, record in sample_map_df.iterrows():
 
             external_id = record.external_id
             if external_id not in external_id_to_img_path_dict:
-                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                 continue 
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            map_spotting_output_dir = os.path.join(spotting_output_dir,map_name)
+            map_spotting_output_dir = os.path.join(spotting_output_dir, map_name)
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
         
-            if spotter_option == 'abcnet':
+            if spotter_model == 'abcnet':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
-            elif spotter_option == 'testr':
-                run_spotting_command = f'python demo/demo.py --config_file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
+            elif spotter_model == 'testr':
+                run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
             else:
                 raise NotImplementedError
             
@@ -195,7 +197,6 @@ def run_pipeline(args):
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
 
             logging.info('Done text spotting for %s', map_name)
-
     time_text_spotting = time.time()
     
 
@@ -210,8 +211,8 @@ def run_pipeline(args):
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
             if external_id not in external_id_to_img_path_dict:
-                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                 continue 
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
@@ -239,8 +240,8 @@ def run_pipeline(args):
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
             if external_id not in external_id_to_img_path_dict:
-                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                 continue 
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
 
             in_geojson = os.path.join(output_folder, stitch_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
             
@@ -323,11 +324,15 @@ def main():
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
 
-    parser.add_argument('--spotter_option', type=str, default='testr', 
-        choices=['abcnet', 'testr'], 
+    
+    parser.add_argument('--spotter_model', type=str, default='testr', choices=['abcnet', 'testr'], 
         help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
-    parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/SynMap_Polygon.yaml', 
+    parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
+    parser.add_argument('--spotter_expt_name', type=str, default='testr_syn',
+        help='Name of spotter experiment, if empty using config file name') 
+    # python run.py --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_metadata_56628_20220724.csv --expt_name 57k_maps --module_text_spotting --spotter_model testr --spotter_config /home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
+
     
     parser.add_argument('--print_command', default=False, action='store_true')
 
