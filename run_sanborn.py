@@ -121,18 +121,6 @@ def run_pipeline(args):
             
             map_name = os.path.basename(img_path).split('.')[0]
             
-            # if img_path[-4:] == '.sid':
-            #     # convert sid to jpg
-            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-
-            #     mrsiddecode_executable="/home/zekun/dr_maps/mapkurator-system/m1_geotiff/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531/Raster_DSDK/bin/mrsiddecode"
-
-            #     run_sid_to_jpg_command = mrsiddecode_executable + ' -quiet -i '+ img_path + ' -o '+redirected_path
-            #     time_usage = execute_command(run_sid_to_jpg_command, if_print_command)
-            #     time_usage_dict[external_id]['conversion'] = time_usage
-
-            #     img_path = redirected_path
-                
 
             os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
             if not os.path.isdir(cropping_output_dir):
@@ -152,11 +140,6 @@ def run_pipeline(args):
         for file_path in file_list:
             map_name = os.path.basename(file_path).split('.')[0]
 
-            # external_id = record.external_id
-            # img_path = external_id_to_img_path_dict[external_id]
-            # map_name = os.path.basename(img_path).split('.')[0]
-
-
             map_spotting_output_dir = os.path.join(spotting_output_dir,map_name)
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
@@ -171,8 +154,7 @@ def run_pipeline(args):
             run_spotting_command  += ' 1> /dev/null'
             
             time_usage = execute_command(run_spotting_command, if_print_command)
-            # time_usage_dict[external_id]['spotting'] = time_usage
-
+            
             logging.info('Done text spotting for %s', map_name)
 
     time_text_spotting = time.time()

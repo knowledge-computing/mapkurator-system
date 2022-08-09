@@ -82,7 +82,7 @@ def run_pipeline(args):
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_'+'crop_out_' + spotter_expt_name + '_geocoord/')
+    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
 
     if not os.path.isdir(expt_out_dir):
         os.makedirs(expt_out_dir)
