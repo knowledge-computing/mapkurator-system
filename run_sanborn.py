@@ -47,6 +47,7 @@ def run_pipeline(args):
     # module_geocoord_geojson = args.module_geocoord_geojson 
     # module_entity_linking = args.module_entity_linking
     module_geocoding = args.module_geocoding
+    module_clustering = args.module_clustering
 
     spotter_option = args.spotter_option
     geocoder_option = args.geocoder_option
@@ -74,10 +75,11 @@ def run_pipeline(args):
     
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'crop_out_' + spotter_option)
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option)
-    # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_abc_geocoord/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
+    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
     geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_suffix_' + spotter_option)
+    clustering_output_dir = os.path.join(output_folder, expt_name, 'cluster_' + spotter_expt_name + '/')
 
     # # ------------------------ Get image dimension ------------------------------
     # if module_get_dimension:
@@ -180,7 +182,7 @@ def run_pipeline(args):
 
     # # ------------------------- Geocoding ------------------------------
     if module_geocoding:
-        os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
+        os.chdir(os.path.join(map_kurator_system_dir ,'m_sanborn'))
 
         if metadata_tsv_path is not None:
             map_df = pd.read_csv(metadata_tsv_path, sep='\t')
@@ -196,7 +198,7 @@ def run_pipeline(args):
             else:
                 suffix = ', Los Angeles' # LA sanborn
 
-            run_geocoding_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
+            run_geocoding_command = 'python3 s1_geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
                 ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix="' + suffix + '"'
             
             time_usage = execute_command(run_geocoding_command, if_print_command)
@@ -208,6 +210,27 @@ def run_pipeline(args):
 
     
     time_geocoding = time.time()
+
+
+    if module_clustering:
+        os.chdir(os.path.join(map_kurator_system_dir ,'m_sanborn'))
+
+        if not os.path.isdir(clustering_output_dir):
+            os.makedirs(clustering_output_dir)
+
+        for file_path in file_list:
+            map_name = os.path.basename(file_path).split('.')[0]
+            
+            # run_clustering_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
+            #     ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix="' + suffix + '"'
+            
+            time_usage = execute_command(run_clustering_command, if_print_command)
+
+            # break
+
+
+        logging.info('Done geocoding for %s', map_name)
+
     
 
     # # ------------------------- Convert image coordinates to geocoordinates ------------------------------
@@ -282,15 +305,15 @@ def main():
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output')
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
 
-    
     parser.add_argument('--module_get_dimension', default=False, action='store_true')
-    parser.add_argument('--module_gen_geotiff', default=False, action='store_true') # only supports dr maps
+    # parser.add_argument('--module_gen_geotiff', default=False, action='store_true') # only supports dr maps
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
     parser.add_argument('--module_geocoding', default=False, action='store_true') # only supports sanborn
-    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true') # only supports dr maps
-    parser.add_argument('--module_entity_linking', default=False, action='store_true') # only supports dr maps
+    # parser.add_argument('--module_geocoord_geojson', default=False, action='store_true') # only supports dr maps
+    # parser.add_argument('--module_entity_linking', default=False, action='store_true') # only supports dr maps
+    parser.add_argument('--module_clustering', default=False, action='store_true') # only supports dr maps
 
     parser.add_argument('--print_command', default=False, action='store_true')
 
