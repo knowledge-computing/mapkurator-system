@@ -9,8 +9,8 @@ import geojson
 
 logging.basicConfig(level=logging.INFO)
 
-def main(args):
 
+def main(args):
     geojson_file = args.in_geojson_file
     output_dir = args.out_geojson_dir
 
@@ -49,11 +49,15 @@ def main(args):
         if ret_value != 0:
             logging.info('Failed generating geocoord geojson for %s', geojson_file)
         else:
-            with open(geojson_file, 'r') as img_geojson, open(output_dir + geojson_filename_id, 'w') as geocoord_geojson:
+            with open(geojson_file) as img_geojson, open(output_dir + geojson_filename_id + '.geojson',
+                                                         'r+') as geocoord_geojson:
                 img_data = geojson.load(img_geojson)
                 geocoord_data = geojson.load(geocoord_geojson)
                 for img_feature, geocoord_feature in zip(img_data['features'], geocoord_data['features']):
-                    geocoord_feature['properties']['img_coordinates'] = np.array(img_feature['geometry']['coordinates'], dtype=np.int32).reshape(-1, 2)
+                    geocoord_feature['properties']['img_coordinates'] = np.array(img_feature['geometry']['coordinates'],
+                                                                                 dtype=np.int32).reshape(-1, 2).tolist()
+
+            with open(output_dir + geojson_filename_id + '.geojson', 'w') as geocoord_geojson:
                 geojson.dump(geocoord_data, geocoord_geojson)
 
             logging.info('Done generating geocoord geojson for %s', geojson_file)
