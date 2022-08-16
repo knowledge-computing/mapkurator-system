@@ -75,11 +75,11 @@ def run_pipeline(args):
     
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_option)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_option)
+    # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option + '/')
     geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_suffix_' + spotter_option)
-    clustering_output_dir = os.path.join(output_folder, expt_name, 'cluster_' + spotter_expt_name + '/')
+    clustering_output_dir = os.path.join(output_folder, expt_name, 'cluster_' + spotter_option + '/')
 
     # # ------------------------ Get image dimension ------------------------------
     # if module_get_dimension:

@@ -61,11 +61,16 @@ def clustering_func(lat_list, lng_list):
 def clustering(args):
     dataset_name = args.dataset_name
     geocoding_name = args.geocoding_name
+    remove_duplicate_location = args.remove_duplicate_location
 
     sanborn_output_dir = '/data2/sanborn_maps_output'
 
     input_dir=os.path.join(sanborn_output_dir, dataset_name, 'geocoding_suffix_testr', geocoding_name)
-    output_dir = os.path.join(sanborn_output_dir, dataset_name, 'clustering_testr', geocoding_name)
+    if remove_duplicate_location:
+        output_dir = os.path.join(sanborn_output_dir, dataset_name, 'clustering_testr_removeduplicate', geocoding_name)
+    else:
+        output_dir = os.path.join(sanborn_output_dir, dataset_name, 'clustering_testr', geocoding_name)
+        
     county_boundary_path = '/home/zekun/Sanborn/cb_2018_us_county_500k/cb_2018_us_county_500k.shp'
 
     if not os.path.isdir(output_dir):
@@ -97,7 +102,6 @@ def clustering(args):
         if index >= 0:
             poly_geometry = county_boundary_df.iloc[index].geometry
         
-        
         with open(os.path.join(input_dir,file_path), 'r') as f:
             data = f.readlines()
             
@@ -126,6 +130,10 @@ def clustering(args):
             else: # cluster based on all results
                 lat_list.append(lat)
                 lng_list.append(lng)
+
+        if remove_duplicate_location:
+            lat_list = list(set(lat_list))
+            lng_list = list(set(lng_list))
             
         if len(lat_list) >0 and len(lng_list) > 0:
             pred = clustering_func(lat_list, lng_list)
@@ -180,7 +188,7 @@ def main():
     parser.add_argument('--geocoding_name', type=str, default=None, 
         choices=['google','arcgis','geonames'],
         help='geocoder name')
- 
+    parser.add_argument('--remove_duplicate_location', default=False, action='store_true') # whether remove duplicate geolocations for clustering
     
     # parser.add_argument('--output_folder', type=str, default='/data2/sanborn_maps_output/LA_sanborn/geocoding/')
     # parser.add_argument('--input_map_geojson_path', type=str, default='/data2/sanborn_maps_output/LA_sanborn/geojson_testr/service-gmd-gmd436m-g4364m-g4364lm-g4364lm_g00656189401-00656_01_1894-0001l.geojson')
