@@ -205,7 +205,6 @@ def run_pipeline(args):
 
             # break
 
-
         logging.info('Done geocoding for %s', map_name)
 
     
@@ -322,8 +321,8 @@ def main():
         help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
 
     parser.add_argument('--geocoder_option', type=str, default='arcgis', 
-        choices=['arcgis', 'google','geonames'], 
-        help='Select text spotting model option from ["arcgis","google","geonames"]') # select text spotting model
+        choices=['arcgis', 'google','geonames','osm'], 
+        help='Select text spotting model option from ["arcgis","google","geonames","osm"]') # select text spotting model
 
     # params for geocoder:
     parser.add_argument('--api_key', type=str, default=None, help='api_key for geocoder. can be None if not running geocoding module')

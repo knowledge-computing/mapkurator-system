@@ -24,7 +24,13 @@ def google_geocoding(place_name, api_key = None, maxRows = 5):
         print(e)
         return -1
         
-    
+def osm_geocoding(place_name,  maxRows = 5):
+    try:
+        response = geocoder.osm(place_name,  maxRows = maxRows)
+        return response.json
+    except exception as e:
+        print(e)
+        return -1   
     
 
 def geonames_geocoding(place_name, user_name = None, maxRows = 5):
@@ -78,6 +84,8 @@ def geocoding(args):
             results = google_geocoding(text, api_key = api_key, maxRows = max_results)
         elif geocoder_option == 'geonames':
             results = geonames_geocoding(text, user_name = user_name, maxRows = max_results)
+        elif geocoder_option == 'osm':
+            results = osm_geocoding(text, maxRows = max_results)
         else:
             raise NotImplementedError
 
@@ -87,7 +95,7 @@ def geocoding(args):
         else:
             # save results 
             with open(output_path, 'a') as f:
-                json.dump(results, f)
+                json.dump({'text':text, 'score':score, 'geometry': geometry, 'geocoding':results}, f)
                 f.write('\n')
 
         # pdb.set_trace()
@@ -106,8 +114,8 @@ def main():
     parser.add_argument('--max_results', type=int, default=5, help='max number of results returend by geocoder')
 
     parser.add_argument('--geocoder_option', type=str, default='arcgis', 
-        choices=['arcgis', 'google','geonames'], 
-        help='Select text spotting model option from ["arcgis","google","geonames"]') # select text spotting model
+        choices=['arcgis', 'google','geonames','osm'], 
+        help='Select text spotting model option from ["arcgis","google","geonames","osm"]') # select text spotting model
 
                         
     args = parser.parse_args()
