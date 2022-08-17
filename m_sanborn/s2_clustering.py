@@ -180,7 +180,7 @@ def clustering(args):
         map_name = os.path.basename(file_path).split('.')[0]
         if dataset_name == 'LoC_sanborn':
             county_name = meta_df[meta_df['filename'] == map_name]['County'].values[0]
-        elif dataset_name == 'LA_sanborn':
+        elif dataset_name == 'LA_sanborn' or 'two_more':
             county_name = 'Los Angeles County (CA)'
         else:
             raise NotImplementedError
@@ -195,9 +195,7 @@ def clustering(args):
         lat_list = []
         lng_list = []
         for line in data:
-            if line[0:5].strip() == 'null':
-                continue
-                
+
             line_dict = json.loads(line)
             geocoding_dict = line_dict['geocoding']
             text = line_dict['text']
@@ -210,6 +208,7 @@ def clustering(args):
             if 'lat' not in geocoding_dict or 'lng' not in geocoding_dict:
                 #print(geocoding_dict)
                 continue 
+
             lat = float(geocoding_dict['lat'])
             lng = float(geocoding_dict['lng'])
             
@@ -251,7 +250,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--dataset_name', type=str, default=None,
-        choices=['LA_sanborn', 'LoC_sanborn'],
+        choices=['LA_sanborn', 'LoC_sanborn',],
         help='dataset name, same as expt_name')
     parser.add_argument('--geocoding_name', type=str, default=None, 
         choices=['google','arcgis','geonames','osm'],
