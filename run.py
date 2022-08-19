@@ -45,6 +45,7 @@ def run_pipeline(args):
     module_img_geojson = args.module_img_geojson 
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_entity_linking = args.module_entity_linking
+    module_post_ocr = args.module_post_ocr
 
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
@@ -267,6 +268,35 @@ def run_pipeline(args):
 
     time_entity_linking = time.time()
     
+    
+    # ------------------------- post-OCR ------------------------------
+    if module_post_ocr:
+
+        os.chdir(os.path.join(map_kurator_system_dir, 'm6_post_ocr'))
+        
+        for index, record in sample_map_df.iterrows():
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue 
+                
+            geojson_postocr_output_dir = os.path.join(output_folder, 'Turing100', 'geojson_testr_syn_postocr') #geojson_testr_syn_postocr
+            
+            in_geojson = geojson_output_dir + external_id.strip("'").replace('.', '') + ".geojson"
+        
+            if os.path.isfile(in_geojson):
+                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_postocr_output_dir
+                time_usage = execute_command(run_postocr_command, if_print_command)
+                time_usage_dict[external_id]['postocr'] = time_usage
+            else:
+                continue
+
+    time_post_ocr = time.time()
+    
+    
+    
+    
+    
     # --------------------- Time usage logging --------------------------
     print('\n')
     logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
@@ -275,6 +305,7 @@ def run_pipeline(args):
     logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
     logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
     logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
+    logging.info('Time for post OCR : %d',time_post_ocr - time_geocoord_geojson)
 
     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
@@ -323,6 +354,7 @@ def main():
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
+    parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
     
     parser.add_argument('--spotter_model', type=str, default='testr', choices=['abcnet', 'testr'], 
