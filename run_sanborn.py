@@ -12,6 +12,13 @@ from utils import get_img_path_from_external_id
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
+'''
+This Sanborn processing pipeline shares some common modules as DR processing pipeline, including cropping and text spotting. 
+The unique modules are geocoding, clustering, and output geojson generation module. 
+The GeoTiff conversion, Image dimension retrival, Img_to_geo coord and entity linking modules are removed.
+Time usage analysis and error reason logging are removed. 
+'''
+
 def execute_command(command, if_print_command):
     t1 = time.time()
 
@@ -70,46 +77,13 @@ def run_pipeline(args):
 
     # pdb.set_trace()
     # ------------------------- Read sample map list and prepare output dir ----------------
-    
-    
-    
-    geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
+
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
-    spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
-    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
+    spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_option)
+    stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_option)
+    # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_option + '/')
     geocoding_output_dir = os.path.join(output_folder, expt_name, 'geocoding_suffix_' + spotter_option)
-    clustering_output_dir = os.path.join(output_folder, expt_name, 'cluster_' + spotter_expt_name + '/')
-
-    # # ------------------------ Get image dimension ------------------------------
-    # if module_get_dimension:
-    #     for index, record in sample_map_df.iterrows():
-    #         external_id = record.external_id
-    #         img_path = external_id_to_img_path_dict[external_id]
-    #         map_name = os.path.basename(img_path).split('.')[0]
-
-    #         # if img_path == '/data/rumsey-jp2/162/12041157.jp2':
-    #         #     continue 
-
-    #         width, height = get_img_dimension(img_path)
-            
-    #         time_usage_dict[external_id]['img_w'] = width
-    #         time_usage_dict[external_id]['img_h'] = height
-
-
-    # # ------------------------- Generate geotiff ------------------------------
-    # time_start =  time.time()
-    # if module_gen_geotiff:
-    #     os.chdir(os.path.join(map_kurator_system_dir ,'m1_geotiff'))
-        
-    #     if not os.path.isdir(geotiff_output_dir):
-    #         os.makedirs(geotiff_output_dir)
-
-    #     run_geotiff_command = 'python convert_image_to_geotiff.py --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
-    #     time_usage = execute_command(run_geotiff_command, if_print_command)
-    #     time_usage_dict['external_id']['geotiff'] = time_usage
-
-    # time_geotiff = time.time()
+    clustering_output_dir = os.path.join(output_folder, expt_name, 'cluster_' + spotter_option + '/')
     
 
     # ------------------------- Image cropping  ------------------------------
@@ -205,7 +179,6 @@ def run_pipeline(args):
 
             # break
 
-
         logging.info('Done geocoding for %s', map_name)
 
     
@@ -218,82 +191,17 @@ def run_pipeline(args):
         if not os.path.isdir(clustering_output_dir):
             os.makedirs(clustering_output_dir)
 
-        for file_path in file_list:
-            map_name = os.path.basename(file_path).split('.')[0]
+        # for file_path in file_list:
+        #     map_name = os.path.basename(file_path).split('.')[0]
             
-            # run_clustering_command = 'python3 geocoding.py --input_map_geojson_path='+ os.path.join(stitch_output_dir,map_name + '.geojson')  + ' --output_folder=' + geocoding_output_dir + \
-            #     ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix="' + suffix + '"'
-            
-            time_usage = execute_command(run_clustering_command, if_print_command)
-
-            # break
-
-
-        logging.info('Done geocoding for %s', map_name)
-
-    
-
-    # # ------------------------- Convert image coordinates to geocoordinates ------------------------------
-    # if module_geocoord_geojson:
-    #     os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
+        # run_clustering_command = 'python3 s2_clustering.py --dataset_name='+ expt_name + ' --output_folder=' + geocoding_output_dir + \
+        #         ' --api_key=' + api_key + ' --user_name=' + user_name + ' --max_results=5 --geocoder_option=' + geocoder_option + ' --suffix="' + suffix + '"'
         
-    #     if not os.path.isdir(geojson_output_dir):
-    #         os.makedirs(geojson_output_dir)
-        
-    #     run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+stitch_output_dir +' --out_geojson_dir '+geojson_output_dir
-    #     execute_command(run_converter_command, if_print_command)
+        # time_usage = execute_command(run_clustering_command, if_print_command)
 
-    # time_geocoord_geojson = time.time()
 
-    
+        # logging.info('Done geocoding for %s', map_name)
 
-    # # ------------------------- Link entities in OSM ------------------------------
-    # # To jina: 
-    # # remember to change output dir (according to Line69-73)
-    # # time usage logging for each map - write to time_usage_df 
-    # #  -zekun
-    # if module_entity_linking:
-    #     os.chdir(os.path.join(map_kurator_system_dir, 'm5_entity_linker'))
-        
-    #     geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_entity_linker', 'data/100_maps_geojson_abc_linked/')
-    #     if not os.path.isdir(geojson_output_dir):
-    #         os.makedirs(geojson_output_dir)
-
-    #     run_linker_command = 'python entity_linker.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
-    #     execute_command(run_linker_command, if_print_command)
-
-    # time_entity_linking = time.time()
-    
-    # # --------------------- Time usage logging --------------------------
-    # print('\n')
-    # logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
-    # logging.info('Time for Cropping : %d',time_cropping - time_geotiff)
-    # logging.info('Time for text spotting : %d',time_text_spotting - time_cropping)
-    # logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
-    # logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
-    # logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
-
-    # time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
-    # time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
-
-    
-    # # check if exist time_usage log file 
-    # if os.path.isfile(time_usage_log_path):
-    #     existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})
-    #     # if exist duplicate columns, ret time usage values to the latest run
-    #     cols_to_use = existing_df.columns.difference(time_usage_df.columns)
-
-    #     time_usage_df = time_usage_df.join(existing_df[cols_to_use])
-
-    #     # make sure time_usage_expt_name.csv always have the latest time usage
-    #     m_time = os.path.getmtime(time_usage_log_path)
-    #     dt_m = datetime.datetime.fromtimestamp(m_time)
-    #     timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
-    #     deprecated_path = os.path.join(output_folder, expt_name, 'time_usage_' +  timestr +'.csv')
-    #     run_command = 'mv ' + time_usage_log_path + ' ' + deprecated_path
-    #     execute_command(run_command, if_print_command)
-
-    # time_usage_df.to_csv(time_usage_log_path, index_label='external_id')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -322,8 +230,8 @@ def main():
         help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
 
     parser.add_argument('--geocoder_option', type=str, default='arcgis', 
-        choices=['arcgis', 'google','geonames'], 
-        help='Select text spotting model option from ["arcgis","google","geonames"]') # select text spotting model
+        choices=['arcgis', 'google','geonames','osm'], 
+        help='Select text spotting model option from ["arcgis","google","geonames","osm"]') # select text spotting model
 
     # params for geocoder:
     parser.add_argument('--api_key', type=str, default=None, help='api_key for geocoder. can be None if not running geocoding module')
