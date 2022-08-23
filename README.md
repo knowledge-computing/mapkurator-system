@@ -1,2 +1,1 @@
 # mapkurator-system
-test
