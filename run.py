@@ -333,7 +333,6 @@ def main():
         help='Name of spotter experiment, if empty using config file name') 
     # python run.py --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_metadata_56628_20220724.csv --expt_name 57k_maps --module_text_spotting --spotter_model testr --spotter_config /home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
 
-    
     parser.add_argument('--print_command', default=False, action='store_true')
 
                         

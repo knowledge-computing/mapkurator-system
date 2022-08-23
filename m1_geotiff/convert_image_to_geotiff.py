@@ -20,6 +20,7 @@ def main(args):
 
     jp2_root_dir = args.jp2_root_dir
     sid_root_dir = args.sid_root_dir
+    additional_root_dir = args.additional_root_dir
     out_geotiff_dir = args.out_geotiff_dir
 
     sample_map_path = args.sample_map_path
@@ -27,9 +28,11 @@ def main(args):
 
     jp2_file_path_list = glob.glob(os.path.join(jp2_root_dir, '*/*.jp2'))
     sid_file_path_list = glob.glob(os.path.join(sid_root_dir, '*.jpg')) # use converted jpg directly
+    add_file_path_list = glob.glob(os.path.join(additional_root_dir, '*'))
 
     jp2_file_fullpath_dict = func_file_to_fullpath_dict(jp2_file_path_list) 
     sid_file_fullpath_dict = func_file_to_fullpath_dict(sid_file_path_list) 
+    add_file_fullpath_dict = func_file_to_fullpath_dict(add_file_path_list) 
 
     sample_map_df = pd.read_csv(sample_map_path, dtype={'external_id':str})
 
@@ -45,6 +48,8 @@ def main(args):
             full_path = jp2_file_fullpath_dict[filename_without_extension]
         elif filename_without_extension in sid_file_fullpath_dict:
             full_path = sid_file_fullpath_dict[filename_without_extension]
+        elif filename_without_extension in add_file_fullpath_dict:
+            full_path = add_file_fullpath_dict[filename_without_extension]
         else:
             print('image with external_id not found in image_dir:', external_id)
             continue
@@ -65,32 +70,21 @@ def main(args):
         
         
         assert transform_method in ['affine','polynomial','tps']
-        
-            
+             
         # reprojection with gdal_warp
         if transform_method == 'affine': 
             # first order
             
             warp_command = 'gdalwarp -r near -order 1 -of GTiff ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
             
-
-            
         elif transform_method == 'polynomial':
             # second order
             warp_command = 'gdalwarp -r near -order 2 -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
-            # if full_path[-4:] =='.jp2':
-            #     os.system(warp_command)
-            #     # remove temporary tiff file
-            #     os.system('rm ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff')
 
-            #     exit(-1)
-            
         elif transform_method == 'tps':
             # Thin plate spline #debug/11558008.geotiff  #10057000.geotiff
             warp_command = 'gdalwarp -r near -tps -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
             
-            
-
         else:
             raise NotImplementedError
 
@@ -107,8 +101,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--jp2_root_dir', type=str, default='/data/rumsey-jp2/',
                         help='image dir of jp2 files.')
-    parser.add_argument('--sid_root_dir', type=str, default='/data/rumsey-sid/',
+    parser.add_argument('--sid_root_dir', type=str, default='/data2/rumsey_sid_to_jpg/',
                         help='image dir of sid files.')
+    parser.add_argument('--additional_root_dir', type=str, default='/data2/rumsey-luna-img/',
+                        help='image dir of additional luna files.')
     parser.add_argument('--out_geotiff_dir', type=str, default='data/geotiff/',
                         help='output dir for geotiff')
     parser.add_argument('--sample_map_path', type=str, default='data/initial_US_100_maps.csv',
