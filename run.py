@@ -204,7 +204,6 @@ def run_pipeline(args):
     # ------------------------- Image coord geojson (map level) ------------------------------
     if module_img_geojson:
         os.chdir(os.path.join(map_kurator_system_dir ,'m3_image_geojson'))
-        eval_only = "True" # For the image coordinate 
         
         if not os.path.isdir(stitch_output_dir):
             os.makedirs(stitch_output_dir)
@@ -221,7 +220,7 @@ def run_pipeline(args):
             stitch_input_dir = os.path.join(spotting_output_dir, map_name)
             output_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
             
-            run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson +' --eval_only '+ eval_only
+            run_stitch_command = 'python stitch_output.py --eval_only --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson
             try:
                 time_usage = execute_command(run_stitch_command, if_print_command)
                 time_usage_dict[external_id]['imgcoord_geojson'] = time_usage
