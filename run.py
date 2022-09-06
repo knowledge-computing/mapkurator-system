@@ -299,33 +299,14 @@ def run_pipeline(args):
                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
                 continue
 
-            input_geojson_dir = os.path.join(output_folder, '57k_maps', 'stitch/testr_syn/')
-            geojson_postocr_output_dir = os.path.join(output_folder, '57k_maps', 'postocr/testr_syn') #geojson_testr_syn_postocr
-
-            # input_geojson_dir = os.path.join(output_folder, 'test3_Min_remove/') # For corruption testing
-            # geojson_postocr_output_dir  = os.path.join(output_folder, 'out2_Min_remove/') # For corruption testing
-            # input_geojson_dir = os.path.join(output_folder, 'corrupt_test_min/') # For corruption testing
-            # geojson_postocr_output_dir  = os.path.join(output_folder, 'corrupt_test_min_out/') # For corruption testing
-
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
+            input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
+            geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
 
-            input_geojson_file = os.path.join(input_geojson_dir, map_name + '.geojson')
-            geojson_postocr_output_file = os.path.join(geojson_postocr_output_dir, map_name + '.geojson')
-
-            run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
-
-            # Will be removed
-            # try:
-            #     time_usage = execute_command(run_postocr_command, if_print_command)
-            #     time_usage_dict[external_id]['postocr'] = time_usage
-            # except Exception as e:
-            #     error_reason_dict[external_id] = {'img_path':None, 'error': e } 
-
-            # New modification 
             if os.path.isfile(in_geojson):
-                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_postocr_output_dir
+                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
                 exe_ret = execute_command(run_postocr_command, if_print_command)
             
                 if 'error' in exe_ret:
