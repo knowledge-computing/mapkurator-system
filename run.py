@@ -316,11 +316,29 @@ def run_pipeline(args):
 
             run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
 
-            try:
-                time_usage = execute_command(run_postocr_command, if_print_command)
-                time_usage_dict[external_id]['postocr'] = time_usage
-            except Exception as e:
-                error_reason_dict[external_id] = {'img_path':None, 'error': e } 
+            # Will be removed
+            # try:
+            #     time_usage = execute_command(run_postocr_command, if_print_command)
+            #     time_usage_dict[external_id]['postocr'] = time_usage
+            # except Exception as e:
+            #     error_reason_dict[external_id] = {'img_path':None, 'error': e } 
+
+            # New modification 
+            if os.path.isfile(in_geojson):
+                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_postocr_output_dir
+                exe_ret = execute_command(run_postocr_command, if_print_command)
+            
+                if 'error' in exe_ret:
+                    error = exe_ret['error']
+                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+                elif 'time_usage' in exe_ret:
+                    time_usage = exe_ret['time_usage']
+                    time_usage_dict[external_id]['postocr'] = time_usage
+                else:
+                    raise NotImplementedError
+                    
+            else:
+                continue
 
     time_post_ocr = time.time()
     
