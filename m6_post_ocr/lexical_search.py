@@ -8,7 +8,7 @@ import json
 import nltk
 import logging
 from dotenv import load_dotenv
-
+import datetime
 import pandas as pd
 import numpy as np
 import logging
@@ -16,7 +16,7 @@ import re
 import warnings
 warnings.filterwarnings("ignore")
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 def db_connect():
     """Elasticsearch Connection on Sansa"""
@@ -71,29 +71,21 @@ def query(args):
     
     es = db_connect()
 
-    
     input_dir = args.in_geojson_dir
     output_geojson = args.out_geojson_dir
-    
-    file_list = glob.glob(input_dir + '/*.geojson')
-    file_list = sorted(file_list)
-    
-    if len(file_list) == 0:
-        logging.warning('No files found for %s' % input_dir)
 
-    for file_path in file_list:
-        map_name = file_path.split('.')[0]
-        # print(map_name)
-        with open(file_path) as json_file:
-            json_df = json.load(json_file)
+    map_name_output = input_dir.split('/')[-1]
 
-            if json_df != {}:  
-                query_result = []
-                for i in range(len(json_df["features"])):
-                    target_text = json_df['features'][i]["properties"]["text"]
-                    target_pts = json_df['features'][i]["geometry"]["coordinates"]
-                
-                    clean_txt = []
+    with open(input_dir) as json_file:
+        json_df = json.load(json_file)
+        if json_df != {}:  
+            query_result = []
+            for i in range(len(json_df["features"])):
+                target_text = json_df['features'][i]["properties"]["text"]
+                target_pts = json_df['features'][i]["geometry"]["coordinates"]
+            
+                clean_txt = []
+                if type(target_text) == str:
                     for t in range(len(target_text)):
                         txt = target_text[t]
                         if txt.isalpha():
@@ -143,14 +135,16 @@ def query(args):
                     else:
                         # only numeric pred_text
                         json_df['features'][i]["properties"]["postocr_label"] = target_text
-                # Save
-                map_name_output = map_name.split('/')[-1]
-                with open(output_geojson +'/'+ map_name_output + '.geojson', 'w') as json_file:
-                    json.dump(json_df, json_file)
-                
-                # print(f'Done: {map_name_output}.geojson')
-                logging.info('Done generating post-OCR geojson for %s', map_name_output)
-                    
+
+                else:
+                    json_df['features'][i]["properties"]["postocr_label"] = target_text
+            # Save
+            with open(output_geojson, 'w') as json_file:
+                json.dump(json_df, json_file)
+            
+            print(f'Done: {map_name_output}')
+            # logging.info('Done generating post-OCR geojson for %s', map_name_output)
+
 
 def main(args):
     query(args)
@@ -160,11 +154,16 @@ if __name__ == '__main__':
     
    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in_geojson_dir', type=str, default='file/', 
+    parser.add_argument('--in_geojson_dir', type=str, default='/data2/rumsey_output/test2/', 
                         help='input dir for post-OCR module (= the output of M4) /crop_MN/output_stitch/')
-    parser.add_argument('--out_geojson_dir', type=str, default='out/',
+    parser.add_argument('--out_geojson_dir', type=str, default='/data2/rumsey_output/out/',
                         help='post-OCR result')
-    
+
+    # parser.add_argument('--in_geojson_file', type=str, default='/data2/rumsey_output/test2/', 
+    #                     help='input dir for post-OCR module (= the output of M4) /crop_MN/output_stitch/')
+    # parser.add_argument('--out_geojson_dir', type=str, default='/data2/rumsey_output/out/',
+    #                     help='post-OCR result')
+
     args = parser.parse_args()
     print(args)
     

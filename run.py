@@ -9,8 +9,12 @@ import datetime
 from PIL import Image 
 from utils import get_img_path_from_external_id, get_img_path_from_external_id_and_image_no
 
+import subprocess
+
+
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
+
 
 def execute_command(command, if_print_command):
     t1 = time.time()
@@ -83,7 +87,10 @@ def run_pipeline(args):
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
+    postocr_output_dir = os.path.join(output_folder, expt_name, 'postocr/'+ spotter_expt_name)
     geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
+
+    
 
     if not os.path.isdir(expt_out_dir):
         os.makedirs(expt_out_dir)
@@ -230,8 +237,66 @@ def run_pipeline(args):
             
     time_img_geojson = time.time()
 
+    # ------------------------- post-OCR ------------------------------
+    if module_post_ocr:
+        
+        # Check if the geojson has been recorded 
+        geojson_postocr_output_dir_check = os.path.join(output_folder, '57k_maps', 'postocr/testr_syn')
+        file_list = glob.glob(geojson_postocr_output_dir_check + '/*.geojson')
+        file_list = sorted(file_list)
+        
+        existed = []
+        for file in file_list:
+            name = file.split('/')[-1].split('.')[0]
+            existed.append(name)
+        #####
+
+        os.chdir(os.path.join(map_kurator_system_dir, 'm6_post_ocr'))
+
+        sample_map_df2 = sample_map_df
+        sample_map_df2['external_id_process'] = sample_map_df2['external_id']
+        sample_map_df2['external_id_process'] = sample_map_df2['external_id_process'].str.strip("'")
+        sample_map_df2['external_id_process'] = sample_map_df2['external_id_process'].str.replace('.', '')
+        sample_map_df2 = sample_map_df2[~sample_map_df2['external_id_process'].isin(existed)]
+
+        print(len(sample_map_df2))
+        print(len(existed))
+        
+        #####
+        for index, record in sample_map_df2.iterrows():
+            
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
+                continue
+
+            input_geojson_dir = os.path.join(output_folder, '57k_maps', 'stitch/testr_syn/')
+            geojson_postocr_output_dir = os.path.join(output_folder, '57k_maps', 'postocr/testr_syn') #geojson_testr_syn_postocr
+
+            # input_geojson_dir = os.path.join(output_folder, 'test3_Min_remove/') # For corruption testing
+            # geojson_postocr_output_dir  = os.path.join(output_folder, 'out2_Min_remove/') # For corruption testing
+            # input_geojson_dir = os.path.join(output_folder, 'corrupt_test_min/') # For corruption testing
+            # geojson_postocr_output_dir  = os.path.join(output_folder, 'corrupt_test_min_out/') # For corruption testing
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+
+
+            input_geojson_file = os.path.join(input_geojson_dir, map_name + '.geojson')
+            geojson_postocr_output_file = os.path.join(geojson_postocr_output_dir, map_name + '.geojson')
+
+            run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
+
+            try:
+                time_usage = execute_command(run_postocr_command, if_print_command)
+                time_usage_dict[external_id]['postocr'] = time_usage
+            except Exception as e:
+                error_reason_dict[external_id] = {'img_path':None, 'error': e } 
+
+    time_post_ocr = time.time()
     
-    # ------------------------- Convert image coordinates to geocoordinates ------------------------------
+    
+     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
     if module_geocoord_geojson:
         os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
         
@@ -244,7 +309,7 @@ def run_pipeline(args):
                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
                 continue 
 
-            in_geojson = os.path.join(output_folder, stitch_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
+            in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
             
             if os.path.isfile(in_geojson):
                 run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
@@ -267,36 +332,8 @@ def run_pipeline(args):
         execute_command(run_linker_command, if_print_command)
 
     time_entity_linking = time.time()
-    
-    
-    # ------------------------- post-OCR ------------------------------
-    if module_post_ocr:
 
-        os.chdir(os.path.join(map_kurator_system_dir, 'm6_post_ocr'))
-        
-        for index, record in sample_map_df.iterrows():
-            external_id = record.external_id
-            if external_id not in external_id_to_img_path_dict:
-                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                continue 
-                
-            geojson_postocr_output_dir = os.path.join(output_folder, 'Turing100', 'geojson_testr_syn_postocr') #geojson_testr_syn_postocr
-            
-            in_geojson = geojson_output_dir + external_id.strip("'").replace('.', '') + ".geojson"
-        
-            if os.path.isfile(in_geojson):
-                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_postocr_output_dir
-                time_usage = execute_command(run_postocr_command, if_print_command)
-                time_usage_dict[external_id]['postocr'] = time_usage
-            else:
-                continue
 
-    time_post_ocr = time.time()
-    
-    
-    
-    
-    
     # --------------------- Time usage logging --------------------------
     print('\n')
     logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
