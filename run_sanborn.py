@@ -209,7 +209,7 @@ def main():
     parser.add_argument('--map_kurator_system_dir', type=str, default='/home/zekun/dr_maps/mapkurator-system/')
     parser.add_argument('--text_spotting_model_dir', type=str, default='/home/zekun/antique_names/model/AdelaiDet/')
     
-    parser.add_argument('--input_map_dir', type=str, default='/data2/sanborn_maps/LA_sanborn')
+    parser.add_argument('--input_map_dir', type=str, default='/data2/mrm_sanborn_maps/LA_sanborn')
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output')
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
 
