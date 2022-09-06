@@ -1,4 +1,5 @@
 import os
+import subprocess
 import glob
 import argparse
 import time
@@ -12,16 +13,35 @@ from utils import get_img_path_from_external_id, get_img_path_from_external_id_a
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
+# def execute_command(command, if_print_command):
+#     t1 = time.time()
+
+#     if if_print_command:
+#         print(command)
+#     os.system(command)
+
+#     t2 = time.time()
+#     time_usage = t2 - t1 
+#     return time_usage
+
 def execute_command(command, if_print_command):
     t1 = time.time()
 
     if if_print_command:
         print(command)
-    os.system(command)
 
-    t2 = time.time()
-    time_usage = t2 - t1 
-    return time_usage
+    try:
+        subprocess.run(command, shell=True,check=True, capture_output = True) #stderr=subprocess.STDOUT)
+        t2 = time.time()
+        time_usage = t2 - t1 
+        return {'time_usage':time_usage}
+    except subprocess.CalledProcessError as err:
+        error = err.stderr.decode('utf8')
+        # format error message to one line
+        error  = error.replace('\n','\t')
+        error = error.replace(',',';')
+        return {'error': error}
+
 
 def get_img_dimension(img_path):
     map_img = Image.open(img_path) 
@@ -100,10 +120,6 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            # if img_path[-4:] == '.sid':
-            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-            #     img_path = redirected_path
-
             try:
                 width, height = get_img_dimension(img_path)
             except Exception as e:
@@ -123,7 +139,11 @@ def run_pipeline(args):
 
         # use converted jpg folder instead of original sid folder
         run_geotiff_command = 'python convert_image_to_geotiff.py --sid_root_dir /data2/rumsey_sid_to_jpg/ --sample_map_path '+ input_csv_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
-        time_usage = execute_command(run_geotiff_command, if_print_command)
+        exe_ret = execute_command(run_geotiff_command, if_print_command)
+        if 'error' in exe_ret:
+            error = exe_ret['error']
+        elif 'time_usage' in exe_ret:
+            time_usage = exe_ret['time_usage']
         
         time_usage_dict[external_id]['geotiff'] = time_usage
         
@@ -143,23 +163,23 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            # if img_path[-4:] == '.sid':
-            #     redirected_path = os.path.join(sid_to_jpg_dir, map_name + '.jpg')
-            #     img_path = redirected_path
-                
-
             os.chdir(os.path.join(map_kurator_system_dir ,'m2_detection_recognition'))
             if not os.path.isdir(cropping_output_dir):
                 os.makedirs(cropping_output_dir)
             
             run_crop_command = 'python crop_img.py --img_path '+img_path + ' --output_dir '+ cropping_output_dir
 
-            try:
-                time_usage = execute_command(run_crop_command, if_print_command)
-                time_usage_dict[external_id]['cropping'] = time_usage
-            except Exception as e:
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
+            exe_ret = execute_command(run_crop_command, if_print_command)
 
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+            elif 'time_usage' in exe_ret:
+                time_usage = exe_ret['time_usage']
+                time_usage_dict[external_id]['cropping'] = time_usage
+            else:
+                raise NotImplementedError
+                
             
     time_cropping = time.time()
     
@@ -190,12 +210,17 @@ def run_pipeline(args):
                 raise NotImplementedError
             
             run_spotting_command  += ' 1> /dev/null'
+
+            exe_ret = execute_command(run_spotting_command, if_print_command)
             
-            try:
-                time_usage = execute_command(run_spotting_command, if_print_command)
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+            elif 'time_usage' in exe_ret:
+                time_usage = exe_ret['time_usage']
                 time_usage_dict[external_id]['spotting'] = time_usage
-            except Exception as e:
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
+            else:
+                raise NotImplementedError
 
             logging.info('Done text spotting for %s', map_name)
     time_text_spotting = time.time()
@@ -221,11 +246,17 @@ def run_pipeline(args):
             output_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
             
             run_stitch_command = 'python stitch_output.py --eval_only --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson
-            try:
-                time_usage = execute_command(run_stitch_command, if_print_command)
-                time_usage_dict[external_id]['imgcoord_geojson'] = time_usage
-            except Exception as e:
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
+            
+            exe_ret = execute_command(run_stitch_command, if_print_command)
+            
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+            elif 'time_usage' in exe_ret:
+                time_usage = exe_ret['time_usage']
+                time_usage_dict[external_id]['stitch'] = time_usage
+            else:
+                raise NotImplementedError
             
     time_img_geojson = time.time()
 
@@ -247,8 +278,17 @@ def run_pipeline(args):
             
             if os.path.isfile(in_geojson):
                 run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
-                time_usage = execute_command(run_converter_command, if_print_command)
-                time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+                
+                exe_ret = execute_command(run_converter_command, if_print_command)
+            
+                if 'error' in exe_ret:
+                    error = exe_ret['error']
+                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+                elif 'time_usage' in exe_ret:
+                    time_usage = exe_ret['time_usage']
+                    time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+                else:
+                    raise NotImplementedError
             else:
                 continue
 
@@ -285,8 +325,17 @@ def run_pipeline(args):
         
             if os.path.isfile(in_geojson):
                 run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_postocr_output_dir
-                time_usage = execute_command(run_postocr_command, if_print_command)
-                time_usage_dict[external_id]['postocr'] = time_usage
+                exe_ret = execute_command(run_postocr_command, if_print_command)
+            
+                if 'error' in exe_ret:
+                    error = exe_ret['error']
+                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+                elif 'time_usage' in exe_ret:
+                    time_usage = exe_ret['time_usage']
+                    time_usage_dict[external_id]['postocr'] = time_usage
+                else:
+                    raise NotImplementedError
+                    
             else:
                 continue
 
