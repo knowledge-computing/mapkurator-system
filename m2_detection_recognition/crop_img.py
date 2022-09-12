@@ -34,7 +34,7 @@ def main(args):
 
     enlarged_map = Image.new(mode="RGB", size=(enlarged_width, enlarged_height))
     # paste map_imge to enlarged_map
-    enlarged_map.paste(map_img)
+    enlarged_map.paste(map_img,None) #enlarged_map.paste(map_img)
 
     for idx in range(0, num_tiles_h):
         for jdx in range(0, num_tiles_w):
