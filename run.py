@@ -338,22 +338,19 @@ def run_pipeline(args):
                 continue 
 
             in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
-            
-            if os.path.isfile(in_geojson):
-                run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
-                
-                exe_ret = execute_command(run_converter_command, if_print_command)
-            
-                if 'error' in exe_ret:
-                    error = exe_ret['error']
-                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-                elif 'time_usage' in exe_ret:
-                    time_usage = exe_ret['time_usage']
-                    time_usage_dict[external_id]['geocoord_geojson'] = time_usage
-                else:
-                    raise NotImplementedError
+
+            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
+
+            exe_ret = execute_command(run_converter_command, if_print_command)
+
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
+            elif 'time_usage' in exe_ret:
+                time_usage = exe_ret['time_usage']
+                time_usage_dict[external_id]['geocoord_geojson'] = time_usage
             else:
-                continue
+                raise NotImplementedError
 
     time_geocoord_geojson = time.time()
 
