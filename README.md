@@ -66,17 +66,17 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 <img width="1627" alt="image" src="https://user-images.githubusercontent.com/5383572/189727942-80ad63c6-6c2e-478a-9992-c0f1519a0549.png">
 
 ### Model Details
-**ImageCropping** module divides huge map images (>10K pixels) to smaller image patches (1K pixels) so that TextSpotter could process.
+- **ImageCropping** module divides huge map images (>10K pixels) to smaller image patches (1K pixels) so that TextSpotter could process.
 
-**PatchTextSpotter** is instantiated with the [TESTR](https://github.com/mlpc-ucsd/TESTR) model which detects and recognizes text labels on images. We use the pretrained weights on ICDAR 2015 dataset, then fine-tune on synthetic historical map images. 
+- **PatchTextSpotter** is instantiated with the [TESTR](https://github.com/mlpc-ucsd/TESTR) model which detects and recognizes text labels on images. We use the pretrained weights on ICDAR 2015 dataset, then fine-tune on synthetic historical map images. 
 
-**PatchtoMapMerging** is the module to merge the patch-level spotting results into map-level.
+- **PatchtoMapMerging** is the module to merge the patch-level spotting results into map-level.
 
-**GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
+- **GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
 
-**PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the external knowledge bases (e.g., OpenStreetMap). Post-OCR applies fuzzy search for finding the text candidates using elastic search and picks one candidate by the word popularity from the dictionary. 
+- **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the external knowledge bases (e.g., OpenStreetMap). Post-OCR applies fuzzy search for finding the text candidates using elastic search and picks one candidate by the word popularity from the dictionary. 
 
-**EntityLinker** finds the candidate geo-entities in the external knowledge bases (e.g., OpenStreetMap) for the places on historical map. The entity linking is implemented with elastic search method which considers not only the text label, but also their geo-coordinates. (Geo-coordinates are obtained from GeocoordConverter)
+- **EntityLinker** finds the candidate geo-entities in the external knowledge bases (e.g., OpenStreetMap) for the places on historical map. The entity linking is implemented with elastic search method which considers not only the text label, but also their geo-coordinates. (Geo-coordinates are obtained from GeocoordConverter)
 
 
 ### How To Use
