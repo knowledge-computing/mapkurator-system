@@ -289,21 +289,16 @@ def run_pipeline(args):
 
             run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
 
-            if os.path.isfile(input_geojson_file):
+            exe_ret = execute_command(run_postocr_command, if_print_command)
 
-                exe_ret = execute_command(run_postocr_command, if_print_command)
-
-                if 'error' in exe_ret:
-                    error = exe_ret['error']
-                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-                elif 'time_usage' in exe_ret:
-                    time_usage = exe_ret['time_usage']
-                    time_usage_dict[external_id]['postocr'] = time_usage
-                else:
-                    raise NotImplementedError
-                    
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+            elif 'time_usage' in exe_ret:
+                time_usage = exe_ret['time_usage']
+                time_usage_dict[external_id]['postocr'] = time_usage
             else:
-                continue
+                raise NotImplementedError
 
     time_post_ocr = time.time()
     
