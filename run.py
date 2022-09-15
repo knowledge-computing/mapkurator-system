@@ -269,30 +269,12 @@ def run_pipeline(args):
     # ------------------------- post-OCR ------------------------------
     if module_post_ocr:
         
-        # Check if the geojson has been recorded 
-        geojson_postocr_output_dir_check = os.path.join(output_folder, '57k_maps', 'postocr/testr_syn')
-        file_list = glob.glob(geojson_postocr_output_dir_check + '/*.geojson')
-        file_list = sorted(file_list)
-        
-        existed = []
-        for file in file_list:
-            name = file.split('/')[-1].split('.')[0]
-            existed.append(name)
-        #####
-
         os.chdir(os.path.join(map_kurator_system_dir, 'm6_post_ocr'))
 
-        sample_map_df2 = sample_map_df
-        sample_map_df2['external_id_process'] = sample_map_df2['external_id']
-        sample_map_df2['external_id_process'] = sample_map_df2['external_id_process'].str.strip("'")
-        sample_map_df2['external_id_process'] = sample_map_df2['external_id_process'].str.replace('.', '')
-        sample_map_df2 = sample_map_df2[~sample_map_df2['external_id_process'].isin(existed)]
+        if not os.path.isdir(postocr_output_dir):
+            os.makedirs(postocr_output_dir)
 
-        print(len(sample_map_df2))
-        print(len(existed))
-        
-        #####
-        for index, record in sample_map_df2.iterrows():
+        for index, record in sample_map_df.iterrows():
             
             external_id = record.external_id
             if external_id not in external_id_to_img_path_dict:
@@ -305,10 +287,12 @@ def run_pipeline(args):
             input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
             geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
 
-            if os.path.isfile(in_geojson):
-                run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
+            run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
+
+            if os.path.isfile(input_geojson_file):
+
                 exe_ret = execute_command(run_postocr_command, if_print_command)
-            
+
                 if 'error' in exe_ret:
                     error = exe_ret['error']
                     error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
@@ -376,7 +360,7 @@ def run_pipeline(args):
     logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
     logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
     logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
-    logging.info('Time for post OCR : %d',time_post_ocr - time_geocoord_geojson)
+    logging.info('Time for post OCR : %d',time_post_ocr - time_img_geojson)
 
     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')

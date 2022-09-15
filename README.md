@@ -74,7 +74,7 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 
 - **GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
 
-- **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the external knowledge bases (e.g., OpenStreetMap). Post-OCR applies fuzzy search for finding the text candidates using elastic search and picks one candidate by the word popularity from the dictionary. 
+- **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the external knowledge bases (e.g., OpenStreetMap). Post-OCR module finds words' candidates by fuzzy search algorithm from elastic search tools and picks one candidate by the word popularity from the dictionary. 
 
 - **EntityLinker** finds the candidate geo-entities in the external knowledge bases (e.g., OpenStreetMap) for the places on historical map. The entity linking is implemented with elastic search method which considers not only the text label, but also their geo-coordinates. (Geo-coordinates are obtained from GeocoordConverter)
 

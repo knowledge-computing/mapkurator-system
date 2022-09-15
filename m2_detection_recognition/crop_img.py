@@ -1,12 +1,15 @@
 import sys
 import os
-from PIL import Image 
+from PIL import Image, ImageFile
 import numpy as np
 import argparse
 import logging
 
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
+
+#add this one line and import ImageFile above 
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def main(args):
 

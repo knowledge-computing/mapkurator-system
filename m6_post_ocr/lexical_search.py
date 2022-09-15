@@ -16,7 +16,7 @@ import re
 import warnings
 warnings.filterwarnings("ignore")
 
-# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 def db_connect():
     """Elasticsearch Connection on Sansa"""
@@ -32,39 +32,6 @@ def db_connect():
     return es
 
 
-
-def find_min_edist(target, candidates):
-    """Helper func: Compute edist and save the identical edist (the smallest) candidates"""
-    
-    edd_list = []
-    pop_list = []
-
-    for i in candidates:
-        compare = i.split(',')[0]
-        edd = nltk.edit_distance(target.upper(), compare.upper())
-        edd_list.append(edd)
-    
-    min_edd = min(edd_list)
-    
-    min_candidates = [candi for j, candi in enumerate(candidates) if edd_list[j] == min_edd]
-
-    # Pick the most popular one if there are multiple same edist candidate existed
-    if len(min_candidates) > 1:
-        
-        for k in min_candidates:
-            
-            ipop = k.split(',')[-1]
-            if ipop.isnumeric() ==True:
-                pop_list.append(ipop)
-        
-        pop_list = list(map(int, pop_list))
-        pop_idx = pop_list.index(max(pop_list))
-        pick = min_candidates[pop_idx].split(',')[0]
-        return pick
-    
-    else:
-        return min_candidates[0].split(',')[0]
-    
 
 def query(args):
     """ Query candidates and save them as 'postocr_label' """
@@ -100,37 +67,98 @@ def query(args):
                             
                             if type(target_text) == str and any(c.isalpha() for c in target_text): 
                                 inputs = target_text.upper()
-                                q1 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "AUTO:0,7"} }}} # edist 0, 1, 2
+                                q1 = {"query": {"match": {"message": {"query": f"{inputs}"} }}} # edist 0
                                 test = es.search(index="usa_namecount", body=q1, size=100)["hits"]["hits"] 
-                            else:
-                                test = 'NaN'
 
                             edist = []
+                            edist_update = []
+                            
+                            edd_min_find = 0
+                            min_candidates = False
+                            
                             if test != 'NaN':
                                 for tt in range(len(test)):
                                     if 'name' in test[tt]['_source']:
-                                        # candidate = test[tt]['_source']['name']
-                                        candidate = test[tt]['_source']['message']
+                                        candidate = test[tt]['_source']['name']
                                         edist.append(candidate)
-                                    else:
-                                        edist.append('NaN')
-                            else:
-                                edist.append('NaN')
-                            edist = list(set(edist))
+                            
+                                for e in range(len(edist)):
+                                    edd = nltk.edit_distance(inputs.upper(), edist[e].upper())
 
-                            if type(target_text) == str and any(c.isalpha() for c in target_text) and len(edist)!=0: 
-                                min_candidates = find_min_edist(target_text, edist)
-                            else:
+                                    if edd == 0:
+                                        edist_update.append(edist[e])
+                                        min_candidates = edist[e]
+                                        edd_min_find = 1
+                            
+                            # edd 1
+                            if edd_min_find != 1:
+                                q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "1"} }}} 
+                                test = es.search(index="usa_namecount", body=q2, size=100)["hits"]["hits"]
+                                
+                                edist = []
+                                edist_count = []
+                                edist_update = []
+                                edist_count_update = []
+
+                                if test != 'NaN':
+                                    for tt in range(len(test)):
+                                        if 'name' in test[tt]['_source']:
+                                            candidate = test[tt]['_source']['message']
+                                            cand = candidate.split(',')[0]
+                                            count = candidate.split(',')[1]
+                                            edist.append(cand)
+                                            edist_count.append(count)
+                                                                            
+                                    for e in range(len(edist)):
+                                        edd = nltk.edit_distance(inputs.upper(), edist[e].upper())
+
+                                        if edd == 1:
+                                            edist_update.append(edist[e])
+                                            edist_count_update.append(edist_count[e])
+                                            
+                                    if len(edist_update) != 0:
+                                        index = edist_count_update.index(max(edist_count_update))
+                                        min_candidates = edist_update[index]
+                                        edd_min_find = 1
+                                
+                            # edd 2
+                            if edd_min_find != 1:
+                                q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "2"} }}} 
+                                test = es.search(index="usa_namecount", body=q2, size=100)["hits"]["hits"]
+                                
+                                edist = []
+                                edist_count = []
+                                edist_update = []
+                                edist_count_update = []
+
+                                if test != 'NaN':
+                                    for tt in range(len(test)):
+                                        if 'name' in test[tt]['_source']:
+                                            candidate = test[tt]['_source']['message']
+                                            cand = candidate.split(',')[0]
+                                            count = candidate.split(',')[1]
+                                            edist.append(cand)
+                                            edist_count.append(count)
+                                                                            
+                                    for e in range(len(edist)):
+                                        edd = nltk.edit_distance(inputs.upper(), edist[e].upper())
+
+                                        if edd == 2:
+                                            edist_update.append(edist[e])
+                                            edist_count_update.append(edist_count[e])
+                                            
+                                    if len(edist_update) != 0:
+                                        index = edist_count_update.index(max(edist_count_update))
+                                        min_candidates = edist_update[index]
+                                        edd_min_find = 1
+                            
+                            if edd_min_find != 1:
                                 min_candidates = False
                             
-                        else: 
-                            min_candidates = False
-                            target_text = ' '.join(process)
-                            
-                        if min_candidates != False:
-                            json_df['features'][i]["properties"]["postocr_label"] = min_candidates
-                        else:
-                            json_df['features'][i]["properties"]["postocr_label"] = target_text
+                            if min_candidates != False:
+                                json_df['features'][i]["properties"]["postocr_label"] = min_candidates
+                            else:
+                                json_df['features'][i]["properties"]["postocr_label"] = target_text
 
                     else:
                         # only numeric pred_text
@@ -138,12 +166,13 @@ def query(args):
 
                 else:
                     json_df['features'][i]["properties"]["postocr_label"] = target_text
+
             # Save
             with open(output_geojson, 'w') as json_file:
                 json.dump(json_df, json_file)
             
-            print(f'Done: {map_name_output}')
-            # logging.info('Done generating post-OCR geojson for %s', map_name_output)
+            # print(f'Done: {map_name_output}')
+            logging.info('Done generating post-OCR geojson for %s', map_name_output)
 
 
 def main(args):
@@ -158,11 +187,6 @@ if __name__ == '__main__':
                         help='input dir for post-OCR module (= the output of M4) /crop_MN/output_stitch/')
     parser.add_argument('--out_geojson_dir', type=str, default='/data2/rumsey_output/out/',
                         help='post-OCR result')
-
-    # parser.add_argument('--in_geojson_file', type=str, default='/data2/rumsey_output/test2/', 
-    #                     help='input dir for post-OCR module (= the output of M4) /crop_MN/output_stitch/')
-    # parser.add_argument('--out_geojson_dir', type=str, default='/data2/rumsey_output/out/',
-    #                     help='post-OCR result')
 
     args = parser.parse_args()
     print(args)
