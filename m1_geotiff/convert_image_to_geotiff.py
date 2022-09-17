@@ -75,15 +75,15 @@ def main(args):
         if transform_method == 'affine': 
             # first order
             
-            warp_command = 'gdalwarp -r near -order 1 -of GTiff ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            warp_command = 'gdalwarp -s_srs EPSG:4326 -t_srs EPSG:3857 -r near -order 1 -of GTiff ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
             
         elif transform_method == 'polynomial':
             # second order
-            warp_command = 'gdalwarp -r near -order 2 -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            warp_command = 'gdalwarp -s_srs EPSG:4326 -t_srs EPSG:3857 -r near -order 2 -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
 
         elif transform_method == 'tps':
             # Thin plate spline #debug/11558008.geotiff  #10057000.geotiff
-            warp_command = 'gdalwarp -r near -tps -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
+            warp_command = 'gdalwarp -s_srs EPSG:4326 -t_srs EPSG:3857  -r near -tps -of GTiff '+ os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff' + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '.geotiff'  
             
         else:
             raise NotImplementedError
