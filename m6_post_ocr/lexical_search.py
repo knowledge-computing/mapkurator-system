@@ -68,7 +68,7 @@ def query(args):
                             if type(target_text) == str and any(c.isalpha() for c in target_text): 
                                 inputs = target_text.upper()
                                 q1 = {"query": {"match": {"message": {"query": f"{inputs}"} }}} # edist 0
-                                test = es.search(index="usa_namecount", body=q1, size=100)["hits"]["hits"] 
+                                test = es.search(index="usa_name_count", body=q1, size=100)["hits"]["hits"] 
 
                             edist = []
                             edist_update = []
@@ -93,7 +93,7 @@ def query(args):
                             # edd 1
                             if edd_min_find != 1:
                                 q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "1"} }}} 
-                                test = es.search(index="usa_namecount", body=q2, size=100)["hits"]["hits"]
+                                test = es.search(index="usa_name_count", body=q2, size=100)["hits"]["hits"]
                                 
                                 edist = []
                                 edist_count = []
@@ -124,7 +124,7 @@ def query(args):
                             # edd 2
                             if edd_min_find != 1:
                                 q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "2"} }}} 
-                                test = es.search(index="usa_namecount", body=q2, size=100)["hits"]["hits"]
+                                test = es.search(index="usa_name_count", body=q2, size=100)["hits"]["hits"]
                                 
                                 edist = []
                                 edist_count = []
