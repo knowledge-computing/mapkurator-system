@@ -251,7 +251,7 @@ def run_pipeline(args):
             stitch_input_dir = os.path.join(spotting_output_dir, map_name)
             output_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
             
-            run_stitch_command = 'python stitch_output.py --eval_only --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson
+            run_stitch_command = 'python stitch_output.py --input_dir '+stitch_input_dir + ' --output_geojson ' + output_geojson
             
             exe_ret = execute_command(run_stitch_command, if_print_command)
             

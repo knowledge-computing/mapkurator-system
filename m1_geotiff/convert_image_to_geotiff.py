@@ -65,7 +65,7 @@ def main(args):
         
         # gdal_translate to add GCP to raw image
         gdal_command = 'gdal_translate -of Gtiff '+gcp_str + full_path + ' ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff'
-        #print(gdal_command)
+        print(gdal_command)
         os.system(gdal_command)
         
         
@@ -87,10 +87,10 @@ def main(args):
             
         else:
             raise NotImplementedError
-
+        print(warp_command)
         os.system(warp_command)
         # remove temporary tiff file
-        os.system('rm ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff')
+        # os.system('rm ' + os.path.join(out_geotiff_dir, filename_without_extension) + '_temp.geotiff')
 
 
         logging.info('Done generating geotiff for %s', external_id)
