@@ -222,7 +222,8 @@ def run_pipeline(args):
             if spotter_model == 'abcnet':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             elif spotter_model == 'testr':
-                run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
+                run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.TRANSFORMER.INFERENCE_TH_TEST 0.3'
+                # print(run_spotting_command)
             else:
                 raise NotImplementedError
             

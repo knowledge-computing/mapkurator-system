@@ -73,6 +73,7 @@ def run_pipeline(args):
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
     spotter_expt_name = args.spotter_expt_name
+    gpu_id = args.gpu_id
     
     if_print_command = args.print_command
     
@@ -97,9 +98,9 @@ def run_pipeline(args):
         error_reason_dict[ex_id] = {'img_path':None, 'error':'Can not find image given external_id.'} 
 
     # initialize time_usage_dict
-    time_usage_dict = dict()
-    for ex_id in sample_map_df['external_id']:
-        time_usage_dict[ex_id] = {} 
+    # time_usage_dict = dict()
+    # for ex_id in sample_map_df['external_id']:
+    #     time_usage_dict[ex_id] = {} 
 
     expt_out_dir = os.path.join(output_folder, expt_name)
     geotiff_output_dir = os.path.join(output_folder, expt_name,  'geotiff')
@@ -108,8 +109,6 @@ def run_pipeline(args):
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
     postocr_output_dir = os.path.join(output_folder, expt_name, 'postocr/'+ spotter_expt_name)
     geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
-
-    
 
     if not os.path.isdir(expt_out_dir):
         os.makedirs(expt_out_dir)
@@ -212,21 +211,25 @@ def run_pipeline(args):
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             elif spotter_model == 'testr':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
+            elif spotter_model == 'spotter_v2':
+                run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
+                print(run_spotting_command)
             else:
                 raise NotImplementedError
             
             run_spotting_command  += ' 1> /dev/null'
-
-            exe_ret = execute_command(run_spotting_command, if_print_command)
             
+
+            
+            exe_ret = execute_command(run_spotting_command, if_print_command)            
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-            elif 'time_usage' in exe_ret:
-                time_usage = exe_ret['time_usage']
-                time_usage_dict[external_id]['spotting'] = time_usage
-            else:
-                raise NotImplementedError
+            # elif 'time_usage' in exe_ret:
+            #     time_usage = exe_ret['time_usage']
+            #     time_usage_dict[external_id]['spotting'] = time_usage
+            # else:
+            #     raise NotImplementedError
 
             logging.info('Done text spotting for %s', map_name)
     time_text_spotting = time.time()
@@ -348,37 +351,37 @@ def run_pipeline(args):
 
 
     # --------------------- Time usage logging --------------------------
-    print('\n')
-    logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
-    logging.info('Time for Cropping : %d',time_cropping - time_geotiff)
-    logging.info('Time for text spotting : %d',time_text_spotting - time_cropping)
-    logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
-    logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
-    logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
-    logging.info('Time for post OCR : %d',time_post_ocr - time_img_geojson)
+#     print('\n')
+#     logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
+#     logging.info('Time for Cropping : %d',time_cropping - time_geotiff)
+#     logging.info('Time for text spotting : %d',time_text_spotting - time_cropping)
+#     logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
+#     logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
+#     logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
+#     logging.info('Time for post OCR : %d',time_post_ocr - time_img_geojson)
 
-    time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
-    time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
+#     time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
+#     time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
 
-    # check if exist time_usage log file 
-    if os.path.isfile(time_usage_log_path):
-        existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})
-        # if exist duplicate columns, ret time usage values to the latest run
-        cols_to_use = existing_df.columns.difference(time_usage_df.columns)
+#     # check if exist time_usage log file 
+#     if os.path.isfile(time_usage_log_path):
+#         existing_df = pd.read_csv(time_usage_log_path, index_col='external_id', dtype={'external_id':str})
+#         # if exist duplicate columns, ret time usage values to the latest run
+#         cols_to_use = existing_df.columns.difference(time_usage_df.columns)
 
-        time_usage_df = time_usage_df.join(existing_df[cols_to_use])
+#         time_usage_df = time_usage_df.join(existing_df[cols_to_use])
 
-        # make sure time_usage_expt_name.csv always have the latest time usage
-        # move the old time_usage.csv to time_usage[timestamp].csv where timestamp is the last expt running time
-        m_time = os.path.getmtime(time_usage_log_path)
-        dt_m = datetime.datetime.fromtimestamp(m_time)
-        timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
+#         # make sure time_usage_expt_name.csv always have the latest time usage
+#         # move the old time_usage.csv to time_usage[timestamp].csv where timestamp is the last expt running time
+#         m_time = os.path.getmtime(time_usage_log_path)
+#         dt_m = datetime.datetime.fromtimestamp(m_time)
+#         timestr = dt_m.strftime("%Y%m%d-%H%M%S") 
 
-        deprecated_path = os.path.join(output_folder, expt_name, 'time_usage_' +  timestr +'.csv')
-        run_command = 'mv ' + time_usage_log_path + ' ' + deprecated_path
-        execute_command(run_command, if_print_command)
+#         deprecated_path = os.path.join(output_folder, expt_name, 'time_usage_' +  timestr +'.csv')
+#         run_command = 'mv ' + time_usage_log_path + ' ' + deprecated_path
+#         execute_command(run_command, if_print_command)
 
-    time_usage_df.to_csv(time_usage_log_path, index_label='external_id')
+#     time_usage_df.to_csv(time_usage_log_path, index_label='external_id')
 
     # --------------------- Error logging --------------------------
     print('\n')
@@ -406,16 +409,19 @@ def main():
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
-    
-    parser.add_argument('--spotter_model', type=str, default='testr', choices=['abcnet', 'testr'], 
-        help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
+    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2'], 
+        help='Select text spotting model option from ["abcnet","testr", "testr_v2"]') # select text spotting model
     parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
-    parser.add_argument('--spotter_expt_name', type=str, default='testr_syn',
+    parser.add_argument('--spotter_expt_name', type=str, default='exp',
         help='Name of spotter experiment, if empty using config file name') 
-    # python run.py --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_metadata_56628_20220724.csv --expt_name 57k_maps --module_text_spotting --spotter_model testr --spotter_config /home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
+    # python run.py --text_spotting_model_dir /home/maplord/rumsey/testr_v2/TESTR/
+    #               --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_splits/luna_omo_metadata_56628_20220724.csv 
+    #               --expt_name 57k_maps_r2 --module_text_spotting 
+    #               --spotter_model testr_v2 --spotter_config /home/maplord/rumsey/testr_v2/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
 
     parser.add_argument('--print_command', default=False, action='store_true')
+    parser.add_argument('--gpu_id', type=int, default=0)
 
                         
     args = parser.parse_args()
