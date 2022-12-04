@@ -130,8 +130,8 @@ def run_pipeline(args):
             except Exception as e:
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': e } 
             
-            time_usage_dict[external_id]['img_w'] = width
-            time_usage_dict[external_id]['img_h'] = height
+            # time_usage_dict[external_id]['img_w'] = width
+            # time_usage_dict[external_id]['img_h'] = height
             
             
     # ------------------------- Generate geotiff ------------------------------
@@ -147,13 +147,13 @@ def run_pipeline(args):
         exe_ret = execute_command(run_geotiff_command, if_print_command)
         if 'error' in exe_ret:
             error = exe_ret['error']
-        elif 'time_usage' in exe_ret:
-            time_usage = exe_ret['time_usage']
+#         elif 'time_usage' in exe_ret:
+#             time_usage = exe_ret['time_usage']
         
-        time_usage_dict[external_id]['geotiff'] = time_usage
+#         time_usage_dict[external_id]['geotiff'] = time_usage
         
 
-    time_geotiff = time.time()
+    # time_geotiff = time.time()
     
 
     # ------------------------- Image cropping  ------------------------------
@@ -179,11 +179,11 @@ def run_pipeline(args):
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-            elif 'time_usage' in exe_ret:
-                time_usage = exe_ret['time_usage']
-                time_usage_dict[external_id]['cropping'] = time_usage
-            else:
-                raise NotImplementedError
+            # elif 'time_usage' in exe_ret:
+            #     time_usage = exe_ret['time_usage']
+            #     time_usage_dict[external_id]['cropping'] = time_usage
+            # else:
+            #     raise NotImplementedError
                 
             
     time_cropping = time.time()
@@ -206,7 +206,17 @@ def run_pipeline(args):
             map_spotting_output_dir = os.path.join(spotting_output_dir, map_name)
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
-        
+            else:
+                num_existing_json = len(glob.glob(os.path.join(map_spotting_output_dir, '*.json')))
+                num_existing_images = len(glob.glob(os.path.join(cropping_output_dir, map_name, '*jpg')))
+                if num_existing_json == num_existing_images:
+                    continue
+                else:
+                    print(f'Re-run spotting for map {map_name}')
+                    import shutil
+                    shutil.rmtree(map_spotting_output_dir)
+                    os.makedirs(map_spotting_output_dir)        
+
             if spotter_model == 'abcnet':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             elif spotter_model == 'testr':
@@ -218,13 +228,12 @@ def run_pipeline(args):
                 raise NotImplementedError
             
             run_spotting_command  += ' 1> /dev/null'
-            
-
-            
+        
             exe_ret = execute_command(run_spotting_command, if_print_command)            
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+            
             # elif 'time_usage' in exe_ret:
             #     time_usage = exe_ret['time_usage']
             #     time_usage_dict[external_id]['spotting'] = time_usage
@@ -232,7 +241,7 @@ def run_pipeline(args):
             #     raise NotImplementedError
 
             logging.info('Done text spotting for %s', map_name)
-    time_text_spotting = time.time()
+    # time_text_spotting = time.time()
     
 
     # ------------------------- Image coord geojson (map level) ------------------------------
@@ -261,13 +270,13 @@ def run_pipeline(args):
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-            elif 'time_usage' in exe_ret:
-                time_usage = exe_ret['time_usage']
-                time_usage_dict[external_id]['stitch'] = time_usage
-            else:
-                raise NotImplementedError
+            # elif 'time_usage' in exe_ret:
+            #     time_usage = exe_ret['time_usage']
+            #     time_usage_dict[external_id]['stitch'] = time_usage
+            # else:
+            #     raise NotImplementedError
             
-    time_img_geojson = time.time()
+    # time_img_geojson = time.time()
 
     # ------------------------- post-OCR ------------------------------
     if module_post_ocr:
@@ -297,13 +306,13 @@ def run_pipeline(args):
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-            elif 'time_usage' in exe_ret:
-                time_usage = exe_ret['time_usage']
-                time_usage_dict[external_id]['postocr'] = time_usage
-            else:
-                raise NotImplementedError
+#             elif 'time_usage' in exe_ret:
+#                 time_usage = exe_ret['time_usage']
+#                 time_usage_dict[external_id]['postocr'] = time_usage
+#             else:
+#                 raise NotImplementedError
 
-    time_post_ocr = time.time()
+#     time_post_ocr = time.time()
     
     
      # ------------------------- Convert image coordinates to geocoordinates ------------------------------
@@ -328,13 +337,13 @@ def run_pipeline(args):
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
-            elif 'time_usage' in exe_ret:
-                time_usage = exe_ret['time_usage']
-                time_usage_dict[external_id]['geocoord_geojson'] = time_usage
-            else:
-                raise NotImplementedError
+#             elif 'time_usage' in exe_ret:
+#                 time_usage = exe_ret['time_usage']
+#                 time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+#             else:
+#                 raise NotImplementedError
 
-    time_geocoord_geojson = time.time()
+#     time_geocoord_geojson = time.time()
 
     # ------------------------- Link entities in OSM ------------------------------
     if module_entity_linking:
@@ -347,7 +356,7 @@ def run_pipeline(args):
         run_linker_command = 'python entity_linker.py --sample_map_path '+ input_csv_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
         execute_command(run_linker_command, if_print_command)
 
-    time_entity_linking = time.time()
+    # time_entity_linking = time.time()
 
 
     # --------------------- Time usage logging --------------------------
