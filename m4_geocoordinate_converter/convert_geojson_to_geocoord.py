@@ -34,13 +34,13 @@ def main(args):
         input = '"' + geojson_file + '"'
 
         if transform_method == 'affine':
-            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 ' + gcp_str
+            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 -s_srs epsg:4326 -t_srs epsg:3857 -skipfailures ' + gcp_str
 
         elif transform_method == 'polynomial':
-            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 2 ' + gcp_str
+            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 2 -s_srs epsg:4326 -t_srs epsg:3857 -skipfailures ' + gcp_str
 
         elif transform_method == 'tps':
-            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -tps ' + gcp_str
+            gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -tps -s_srs epsg:4326 -t_srs epsg:3857 -skipfailures ' + gcp_str
 
         else:
             raise NotImplementedError
