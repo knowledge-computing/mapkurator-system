@@ -18,6 +18,9 @@ def main(args):
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '', regex=True)
     geojson_filename_id = geojson_file.split(".")[0].split("/")[-1]
 
+    if not os.path.isdir(output_dir + "tmp/"):
+        os.makedirs(output_dir + "tmp/")
+
     row = sample_map_df[sample_map_df['external_id'] == geojson_filename_id]
     if not row.empty:
         gcps = ast.literal_eval(row.iloc[0]['gcps'])
@@ -30,8 +33,21 @@ def main(args):
         transform_method = row.iloc[0]['transformation_method']
         assert transform_method in ['affine', 'polynomial', 'tps']
 
+        # minus in y
+        with open(geojson_file) as img_geojson:
+            img_data = geojson.load(img_geojson)
+            for img_feature in img_data['features']:
+                arr = np.array(img_feature['geometry']['coordinates'])
+                img_feature['properties']['img_coordinates'] = np.array(arr).reshape(-1, 2).tolist()
+
+                arr[:, :, 1] *= -1
+                img_feature['geometry']['coordinates'] = arr.tolist()
+
+        with open(output_dir + "tmp/" + geojson_filename_id + '.geojson', 'w') as geocoord_geojson:
+            geojson.dump(img_data, geocoord_geojson)
+
+        input = '"' + output_dir + "tmp/" + geojson_filename_id + '.geojson"'
         output = '"' + output_dir + geojson_filename_id + '.geojson"'
-        input = '"' + geojson_file + '"'
 
         if transform_method == 'affine':
             gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 -s_srs epsg:4326 -t_srs epsg:3857 -skipfailures ' + gcp_str
@@ -46,20 +62,12 @@ def main(args):
             raise NotImplementedError
 
         ret_value = os.system(gecoord_convert_command)
+        if os.path.exists(output_dir + "tmp/" + geojson_filename_id + '.geojson'):
+            os.remove(output_dir + "tmp/" + geojson_filename_id + '.geojson')
+
         if ret_value != 0:
             logging.info('Failed generating geocoord geojson for %s', geojson_file)
         else:
-            with open(geojson_file) as img_geojson, open(output_dir + geojson_filename_id + '.geojson',
-                                                         'r+') as geocoord_geojson:
-                img_data = geojson.load(img_geojson)
-                geocoord_data = geojson.load(geocoord_geojson)
-                for img_feature, geocoord_feature in zip(img_data['features'], geocoord_data['features']):
-                    geocoord_feature['properties']['img_coordinates'] = np.array(img_feature['geometry']['coordinates'],
-                                                                                 dtype=np.int32).reshape(-1, 2).tolist()
-
-            with open(output_dir + geojson_filename_id + '.geojson', 'w') as geocoord_geojson:
-                geojson.dump(geocoord_data, geocoord_geojson)
-
             logging.info('Done generating geocoord geojson for %s', geojson_file)
 
 
