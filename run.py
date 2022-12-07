@@ -300,7 +300,8 @@ def run_pipeline(args):
             geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
 
             run_postocr_command = 'python lexical_search.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
-
+            
+            print(f'finish {geojson_postocr_output_file}')
             exe_ret = execute_command(run_postocr_command, if_print_command)
 
             if 'error' in exe_ret:
@@ -327,6 +328,9 @@ def run_pipeline(args):
             if external_id not in external_id_to_img_path_dict:
                 error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
                 continue 
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
 
             in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
 
