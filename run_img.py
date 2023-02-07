@@ -74,6 +74,7 @@ def run_pipeline(args):
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
     spotter_expt_name = args.spotter_expt_name
+    gpu_id = args.gpu_id
     
     if_print_command = args.print_command
     
@@ -224,6 +225,9 @@ def run_pipeline(args):
             elif spotter_model == 'testr':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.TRANSFORMER.INFERENCE_TH_TEST 0.3'
                 # print(run_spotting_command)
+            elif spotter_model == 'spotter_v2':
+                run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
+                print(run_spotting_command)
             else:
                 raise NotImplementedError
             
@@ -421,8 +425,8 @@ def main():
     parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
     
-    parser.add_argument('--spotter_model', type=str, default='testr', choices=['abcnet', 'testr'], 
-        help='Select text spotting model option from ["abcnet","testr"]') # select text spotting model
+    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2'], 
+        help='Select text spotting model option from ["abcnet","testr", "testr_v2"]') # select text spotting model
     parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
     parser.add_argument('--spotter_expt_name', type=str, default='testr_syn',
@@ -430,7 +434,7 @@ def main():
     # python run.py --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_metadata_56628_20220724.csv --expt_name 57k_maps --module_text_spotting --spotter_model testr --spotter_config /home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
 
     parser.add_argument('--print_command', default=False, action='store_true')
-
+    parser.add_argument('--gpu_id', type=int, default=0)
                         
     args = parser.parse_args()
     print('\n')
