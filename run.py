@@ -221,7 +221,7 @@ def run_pipeline(args):
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
             elif spotter_model == 'testr':
                 run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
-            elif spotter_model == 'spotter_v2':
+            elif spotter_model in ['spotter_v2', 'spotter_v3']:
                 run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
                 print(run_spotting_command)
             else:
@@ -422,8 +422,8 @@ def main():
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
-    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2'], 
-        help='Select text spotting model option from ["abcnet","testr", "testr_v2"]') # select text spotting model
+    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2', "spotter_v3"], 
+        help='Select text spotting model option from ["abcnet","testr", "spotter_v2", "spotter_v3"]') # select text spotting model
     parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
     parser.add_argument('--spotter_expt_name', type=str, default='exp',
