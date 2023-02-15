@@ -70,7 +70,7 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 
 - **PatchTextSpotter** uses a state-of-the-art network architecture [TESTR](https://github.com/mlpc-ucsd/TESTR) for detecting and recognizing text labels on image patches. Due to the lack of annotated samples for training, we create a set of synthetic maps to mimic the text styles (e.g., font, spacing, orientation) in the real historical maps. We place the location names from OpenStreetMap on a map by considering the shape of the location geometry and merge the text with various background styles extracted from the Rumsey collection maps. We train the model with these unlimited synthetic maps and apply the model to the historical maps.
 
-- **PatchtoMapMerging** is the module to merge the patch-level spotting results into map-level.
+- **PatchtoMapMerging** is the module to merge the patch-level spotting results into map-level. Output polygons can be loaded in QGIS for visualization, and they should be aligned with the *ungeorefernced* map image. **Note:** QGIS is **not able to show JP2 file** directly. JP2 should be converted to JPEG before loading in QGIS. 
 
 - **GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
 
