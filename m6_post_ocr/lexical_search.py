@@ -1,50 +1,34 @@
-from elasticsearch_dsl import Search, Q
-from elasticsearch import Elasticsearch, helpers
-from elasticsearch import RequestsHttpConnection
-import argparse
-import os
-import glob
+#-*-coding utf-8-*-
+import logging 
+import requests
 import json
+import argparse
+import http.client as http_client
 import nltk
-import logging
-from dotenv import load_dotenv
-import datetime
-import pandas as pd
-import numpy as np
-import logging
 import re
-import warnings
-warnings.filterwarnings("ignore")
+import glob
+import os
 
+# set the debug level
+http_client.HTTPConnection.debuglevel = 1
 logging.basicConfig(level=logging.INFO)
-
-def db_connect():
-    """Elasticsearch Connection on Sansa"""
-    
-    load_dotenv()
-    
-    DB_HOST = os.getenv("DB_HOST")
-    USER_NAME = os.getenv("DB_USERNAME")
-    PASSWORD = os.getenv("DB_PASSWORD")
-
-    es = Elasticsearch([DB_HOST], connection_class=RequestsHttpConnection, http_auth=(USER_NAME, PASSWORD), verify_certs=False)
-    
-    return es
-
-
+warnings.filterwarnings("ignore")
+        
+headers = {
+    'Content-Type': 'application/json',
+}
 
 def query(args):
     """ Query candidates and save them as 'postocr_label' """
-    
-    es = db_connect()
 
     input_dir = args.in_geojson_dir
     output_geojson = args.out_geojson_dir
 
     map_name_output = input_dir.split('/')[-1]
 
-    with open(input_dir) as json_file:
+    with open(input_dir) as json_file: 
         json_df = json.load(json_file)
+
         if json_df != {}:  
             query_result = []
             for i in range(len(json_df["features"])):
@@ -66,9 +50,14 @@ def query(args):
                         if all(c.isupper() for c in process) or len(process) == 1: 
                             
                             if type(target_text) == str and any(c.isalpha() for c in target_text): 
-                                inputs = target_text.upper()
-                                q1 = {"query": {"match": {"message": {"query": f"{inputs}"} }}} # edist 0
-                                test = es.search(index="usa_name_count", body=q1, size=100)["hits"]["hits"] 
+                                # edist 0
+                                inputs = target_text.lower()
+                                q1 = '{"query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "0"}}}}' 
+                                resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                                            data=q1.encode("utf-8"), \
+                                            headers = headers)
+                                resp_json = json.loads(resp.text)
+                                test = resp_json["hits"]["hits"]
 
                             edist = []
                             edist_update = []
@@ -92,8 +81,13 @@ def query(args):
                             
                             # edd 1
                             if edd_min_find != 1:
-                                q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "1"} }}} 
-                                test = es.search(index="usa_name_count", body=q2, size=100)["hits"]["hits"]
+                                # edist 1
+                                q2 = '{"query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "1"}}}}' 
+                                resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                                            data=q2.encode("utf-8"), \
+                                            headers = headers)
+                                resp_json = json.loads(resp.text)
+                                test = resp_json["hits"]["hits"]
                                 
                                 edist = []
                                 edist_count = []
@@ -123,8 +117,13 @@ def query(args):
                                 
                             # edd 2
                             if edd_min_find != 1:
-                                q2 = {"query": {"match": {"message": {"query": f"{inputs}", "fuzziness": "2"} }}} 
-                                test = es.search(index="usa_name_count", body=q2, size=100)["hits"]["hits"]
+                                # edist 2
+                                q3 = '{"query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "2"}}}}' 
+                                resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                                            data=q3.encode("utf-8"), \
+                                            headers = headers)
+                                resp_json = json.loads(resp.text)
+                                test = resp_json["hits"]["hits"]
                                 
                                 edist = []
                                 edist_count = []
@@ -155,23 +154,26 @@ def query(args):
                             if edd_min_find != 1:
                                 min_candidates = False
                             
+                            
                             if min_candidates != False:
-                                json_df['features'][i]["properties"]["postocr_label"] = min_candidates
+                                json_df['features'][i]["properties"]["postocr_label"] = str(min_candidates)
                             else:
-                                json_df['features'][i]["properties"]["postocr_label"] = target_text
-
+                                json_df['features'][i]["properties"]["postocr_label"] = str(target_text)
+                        
+                        else: # added
+                            json_df['features'][i]["properties"]["postocr_label"] = str(target_text)
+                    
                     else:
                         # only numeric pred_text
-                        json_df['features'][i]["properties"]["postocr_label"] = target_text
+                        json_df['features'][i]["properties"]["postocr_label"] = str(target_text)
 
                 else:
-                    json_df['features'][i]["properties"]["postocr_label"] = target_text
-
+                    json_df['features'][i]["properties"]["postocr_label"] = str(target_text)
+            
             # Save
             with open(output_geojson, 'w') as json_file:
-                json.dump(json_df, json_file)
-            
-            # print(f'Done: {map_name_output}')
+                json.dump(json_df, json_file, ensure_ascii=False)
+        
             logging.info('Done generating post-OCR geojson for %s', map_name_output)
 
 
