@@ -1,15 +1,12 @@
 import logging
 import requests
-import warnings
 import json
 import http.client as http_client
 import nltk
 import re
 
 # set the debug level
-http_client.HTTPConnection.debuglevel = 1
-logging.basicConfig(level=logging.INFO)
-warnings.filterwarnings("ignore")
+logging.getLogger("requests").setLevel(logging.WARNING)
         
 headers = {
     'Content-Type': 'application/json',

@@ -22,52 +22,46 @@ connection_string = f'postgresql://postgres:{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST
 
 
 def main(args):
+    geojson_file = args.in_geojson_file
+    output_dir = args.out_geojson_dir
 
-    # check if first pair of gcps is in midwest-US
-    regex = re.compile('[^a-zA-Z]')
-    conn = create_engine(connection_string, echo=False)
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
-    sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '')
-    print(os.listdir(args.in_geojson_dir))
-    geojson_files = os.listdir(args.in_geojson_dir)
-    geojson_files = geojson_files[0:1]
-    
-    for i, geojson_file in enumerate(geojson_files):
-        row = sample_map_df[sample_map_df['external_id']==geojson_file.split(".")[0]]
-        gcps = ast.literal_eval(row.iloc[0]['gcps'])
-        with open(args.in_geojson_dir + geojson_file) as f:
-            data = geojson.load(f)
-            for feature_data in data['features']:
-                map_pts = np.array(feature_data['geometry']['coordinates']).reshape(-1, 2)
-                map_text = str(feature_data['properties']['text'])
+    sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '', regex=True)
+    row = sample_map_df[sample_map_df['external_id'] == geojson_file.split("/")[-1].split(".")[0]]
+    # gcps = ast.literal_eval(row.iloc[0]['gcps'])
 
-                ########## post-ocr
-                map_text_candidate = lexical_search_query(map_text)
-                feature_data["properties"]["postocr_label"] = map_text_candidate
-                print(map_text_candidate)
-                ########## entity linker
-                map_polygon = Polygon(map_pts)
-                feature_data['properties']['osm_id'] = []
+    with open(geojson_file) as f:
+        data = geojson.load(f)
+        for feature_data in data['features']:
+            map_pts = np.array(feature_data['geometry']['coordinates']).reshape(-1, 2)
+            map_text = str(feature_data['properties']['text'])
 
-                    # query = f"""SELECT p.ogc_fid
-                    #     FROM  polygon_features p
-                    #     WHERE LOWER(p.name) LIKE '%%{map_text}%%'
-                    #     AND ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'::geometry), 4326)::geometry, 4326), p.wkb_geometry);
-                    # """
-        #
-        #             try:
-        #                 intersect_df = pd.read_sql(query, con=conn)
-        #             except sqlalchemy.exc.InternalError:
-        #                 continue
-        #
-        #             if not intersect_df.empty:
-        #                 feature_data['properties']['osm_ogc_fid'] = intersect_df['ogc_fid'].values.tolist()
-        #             # else:
-        #             #     feature_data['properties']['osm_ogc_fid'] = []
+            # ------------------------- post-ocr
+            map_text_candidate = lexical_search_query(map_text)
+            feature_data["properties"]["postocr_label"] = map_text_candidate
+            
+            # ------------------------- entity linker
+            # 1. retrieve all osm ids using elasticsearch osm id
+            # hint 1. query substring match (sample query is shown as below)
+            # '''
+            # {"query": {
+            #     "query_string" : {"default_field" : "name", "query" : "*Lake*"}
+            # } }
+            # '''
+            # hint 2. search_type and size are required to retrieve all possible entries in osm index
+            # resp = requests.get(f'http://localhost:9200/osm/_search?search_type=query_then_fetch&scroll=10m&size=100', \
+            # data=query.encode("utf-8"), \
+            # headers = headers)
 
-            # with open(args.out_geojson_dir+geojson_file, 'w') as output_geojson:
-            #     geojson.dump(data, output_geojson)
 
+            # 2. with all osm ids, use postgres to query spatial relation (if the osm feature is in map boundary)
+
+            
+
+    # ------------------------- entity linker
+    # with open(os.path.join(output_dir, geojson_file.split("/")[-1]), 'w') as output_geojson:
+    #     geojson.dump(data, output_geojson)
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
