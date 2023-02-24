@@ -28,8 +28,10 @@ def main(args):
     conn = create_engine(connection_string, echo=False)
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '')
-
+    print(os.listdir(args.in_geojson_dir))
     geojson_files = os.listdir(args.in_geojson_dir)
+    geojson_files = geojson_files[0:1]
+    
     for i, geojson_file in enumerate(geojson_files):
         row = sample_map_df[sample_map_df['external_id']==geojson_file.split(".")[0]]
         gcps = ast.literal_eval(row.iloc[0]['gcps'])
@@ -42,7 +44,7 @@ def main(args):
                 ########## post-ocr
                 map_text_candidate = lexical_search_query(map_text)
                 feature_data["properties"]["postocr_label"] = map_text_candidate
-
+                print(map_text_candidate)
                 ########## entity linker
                 map_polygon = Polygon(map_pts)
                 feature_data['properties']['osm_id'] = []
@@ -63,15 +65,15 @@ def main(args):
         #             # else:
         #             #     feature_data['properties']['osm_ogc_fid'] = []
 
-            with open(args.out_geojson_dir+geojson_file, 'w') as output_geojson:
-                geojson.dump(data, output_geojson)
+            # with open(args.out_geojson_dir+geojson_file, 'w') as output_geojson:
+            #     geojson.dump(data, output_geojson)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_map_path', type=str, default='data/initial_US_100_maps.csv',
                         help='path to sample map csv, which contains map boundary info')
-    parser.add_argument('--in_geojson_dir', type=str, default='data/100_maps_geojson_abc_geocoord/',
+    parser.add_argument('--in_geojson_file', type=str, default='data/100_maps_geojson_abc_geocoord/',
                         help='input dir for results of M4 geocoordinate converter')
     parser.add_argument('--out_geojson_dir', type=str, default='data/100_maps_geojson_abc_linked/',
                         help='output dir for converted geojson files')

@@ -104,7 +104,7 @@ def run_pipeline(args):
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geocoord/' + spotter_expt_name)
+    geocoord_output_dir = os.path.join(output_folder, expt_name, 'geocoord/' + spotter_expt_name)
     postocr_linking_output_dir = os.path.join(output_folder, expt_name, 'postocr_linking/'+ spotter_expt_name)
 
 
@@ -280,8 +280,8 @@ def run_pipeline(args):
     if module_geocoord_geojson:
         os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
 
-        if not os.path.isdir(geojson_output_dir):
-            os.makedirs(geojson_output_dir)
+        if not os.path.isdir(geocoord_output_dir):
+            os.makedirs(geocoord_output_dir)
 
         for index, record in sample_map_df.iterrows():
             external_id = record.external_id
@@ -295,7 +295,7 @@ def run_pipeline(args):
 
             in_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
 
-            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path ' + os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file ' + in_geojson + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, geojson_output_dir)
+            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path ' + os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file ' + in_geojson + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, geocoord_output_dir)
 
             exe_ret = execute_command(run_converter_command, if_print_command)
 
@@ -328,12 +328,10 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
-            input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
-            geojson_postocr_linking_output_file = os.path.join(postocr_linking_output_dir, map_name + '.geojson')
+            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
 
-            run_postocr_linking_command = 'python post_ocr_entity_linker.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_dir '+ input_geojson_file + ' --out_geojson_dir ' + geojson_postocr_linking_output_file
-            
-            print(f'finish {geojson_postocr_linking_output_file}')
+            run_postocr_linking_command = 'python post_ocr_entity_linker.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
+            print(run_postocr_linking_command)
             exe_ret = execute_command(run_postocr_linking_command, if_print_command)
 
             if 'error' in exe_ret:

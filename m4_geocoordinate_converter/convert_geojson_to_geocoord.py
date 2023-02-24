@@ -18,9 +18,6 @@ def main(args):
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '', regex=True)
     geojson_filename_id = geojson_file.split(".")[0].split("/")[-1]
 
-    if not os.path.isdir(output_dir + "tmp/"):
-        os.makedirs(output_dir + "tmp/")
-
     row = sample_map_df[sample_map_df['external_id'] == geojson_filename_id]
     if not row.empty:
         gcps = ast.literal_eval(row.iloc[0]['gcps'])
