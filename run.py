@@ -331,7 +331,7 @@ def run_pipeline(args):
             input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
             geojson_postocr_linking_output_file = os.path.join(postocr_linking_output_dir, map_name + '.geojson')
 
-            run_postocr_linking_command = 'python post_ocr_entity_linker.py --sample_map_path '+ input_csv_path + '--in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_linking_output_file
+            run_postocr_linking_command = 'python post_ocr_entity_linker.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_dir '+ input_geojson_file + ' --out_geojson_dir ' + geojson_postocr_linking_output_file
             
             print(f'finish {geojson_postocr_linking_output_file}')
             exe_ret = execute_command(run_postocr_linking_command, if_print_command)
