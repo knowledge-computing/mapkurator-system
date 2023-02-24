@@ -353,13 +353,13 @@ def run_pipeline(args):
 
     # ------------------------- Link entities in OSM ------------------------------
     if module_entity_linking:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm5_entity_linker'))
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
         
-        geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_entity_linker', 'data/100_maps_geojson_abc_linked/')
+        geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker', 'data/100_maps_geojson_abc_linked/')
         if not os.path.isdir(geojson_output_dir):
             os.makedirs(geojson_output_dir)
 
-        run_linker_command = 'python entity_linker.py --sample_map_path '+ input_img_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
+        run_linker_command = 'python post_ocr_entity_linker.py --sample_map_path '+ input_img_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
         execute_command(run_linker_command, if_print_command)
 
     time_entity_linking = time.time()
