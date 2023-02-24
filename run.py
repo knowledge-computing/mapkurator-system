@@ -278,6 +278,40 @@ def run_pipeline(args):
             
     # time_img_geojson = time.time()
 
+    # ------------------------- Convert image coordinates to geocoordinates ------------------------------
+    if module_geocoord_geojson:
+        os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
+
+        if not os.path.isdir(geojson_output_dir):
+            os.makedirs(geojson_output_dir)
+
+        for index, record in sample_map_df.iterrows():
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path': None,
+                                                  'error': 'key not in external_id_to_img_path_dict'}
+                continue
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+
+            in_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
+
+            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path ' + os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file ' + in_geojson + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, geojson_output_dir)
+
+            exe_ret = execute_command(run_converter_command, if_print_command)
+
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path': img_path, 'error': error}
+#             elif 'time_usage' in exe_ret:
+#                 time_usage = exe_ret['time_usage']
+#                 time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+#             else:
+#                 raise NotImplementedError
+
+#     time_geocoord_geojson = time.time()
+
     # ------------------------- post-OCR ------------------------------
     if module_post_ocr:
         
@@ -316,38 +350,7 @@ def run_pipeline(args):
 #     time_post_ocr = time.time()
     
     
-     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
-    if module_geocoord_geojson:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
-        
-        if not os.path.isdir(geojson_output_dir):
-            os.makedirs(geojson_output_dir)
 
-        for index, record in sample_map_df.iterrows():
-            external_id = record.external_id
-            if external_id not in external_id_to_img_path_dict:
-                error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-                continue 
-
-            img_path = external_id_to_img_path_dict[external_id]
-            map_name = os.path.basename(img_path).split('.')[0]
-
-            in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
-
-            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
-
-            exe_ret = execute_command(run_converter_command, if_print_command)
-
-            if 'error' in exe_ret:
-                error = exe_ret['error']
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
-#             elif 'time_usage' in exe_ret:
-#                 time_usage = exe_ret['time_usage']
-#                 time_usage_dict[external_id]['geocoord_geojson'] = time_usage
-#             else:
-#                 raise NotImplementedError
-
-#     time_geocoord_geojson = time.time()
 
     # ------------------------- Link entities in OSM ------------------------------
     if module_entity_linking:
