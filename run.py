@@ -330,8 +330,7 @@ def run_pipeline(args):
 
             input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
 
-            run_postocr_linking_command = 'python post_ocr_entity_linker.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
-            print(run_postocr_linking_command)
+            run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
             exe_ret = execute_command(run_postocr_linking_command, if_print_command)
 
             if 'error' in exe_ret:
