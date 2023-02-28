@@ -74,9 +74,10 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 
 - **GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
 
-- **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the OpenStreetMap dictionary. PostOCR module finds words' candidates using [fuzzy query function](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-fuzzy-query.html) from elasticsearch, which contains the place name attribute from the Openstreetmap dictionary. Once PostOCR module identifies words' candidates, the module picks one candidate by the word popularity from the dictionary.
-
-- **EntityLinker** links each map text to the candidate geo-entities in the OpenStreetMap. The entity linking retrieves the candidates that satisfy two criteria: 1) the recognized text from the text spotter contains the geo-entities' name 2) the geocoordinates of detected bounding polygons intersect with the geo-entities' geometry. (Geo-coordinates are obtained from GeocoordConverter)
+- **PostOCR & EntityLinker** 
+  - **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the OpenStreetMap dictionary. PostOCR module finds words' candidates using [fuzzy query function](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-fuzzy-query.html) from elasticsearch, which contains the place name attribute from the Openstreetmap dictionary. Once PostOCR module identifies words' candidates, the module picks one candidate by the word popularity from the dictionary.
+  
+- **EntityLinker** links each map text to the candidate geo-entities in the OpenStreetMap. The entity linking retrieves the candidates that satisfy two criteria: 1) the word candidate retrieved from PostOCR module contains the geo-entities' name 2) the geocoordinates of geo-entities are within the map boundary. (Geo-coordinates are obtained from GeocoordConverter)
 
 
 ### How To Use
@@ -85,8 +86,7 @@ All the modules can be launched from `run.py`. All the outputs will be saved in 
 ```
 usage: run.py [-h] [--map_kurator_system_dir MAP_KURATOR_SYSTEM_DIR] [--text_spotting_model_dir TEXT_SPOTTING_MODEL_DIR]
               [--sample_map_csv_path SAMPLE_MAP_CSV_PATH] [--output_folder OUTPUT_FOLDER] [--expt_name EXPT_NAME] [--module_get_dimension]
-              [--module_gen_geotiff] [--module_cropping] [--module_text_spotting] [--module_img_geojson] [--module_geocoord_geojson] [--module_entity_linking]
-              [--module_post_ocr] [--spotter_model {abcnet,testr}] [--spotter_config SPOTTER_CONFIG] [--spotter_expt_name SPOTTER_EXPT_NAME] [--print_command]
+              [--module_gen_geotiff] [--module_cropping] [--module_text_spotting] [--module_img_geojson] [--module_geocoord_geojson] [--module_post_ocr_entity_linking] [--spotter_model {abcnet,testr}] [--spotter_config SPOTTER_CONFIG] [--spotter_expt_name SPOTTER_EXPT_NAME] [--print_command]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -101,8 +101,7 @@ optional arguments:
   --module_text_spotting
   --module_img_geojson
   --module_geocoord_geojson
-  --module_entity_linking
-  --module_post_ocr
+  --module_post_ocr_entity_linking
   --spotter_model {abcnet,testr}
                         Select text spotting model option from ["abcnet","testr"]
   --spotter_config SPOTTER_CONFIG
