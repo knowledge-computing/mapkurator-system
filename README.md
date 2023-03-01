@@ -75,7 +75,7 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 - **GeocoordinateConverter** converts the text label bounding polygons from image coordinates system to geocoordinates system. Note: polygons in both coordinate systems are saved in the output. 
 
 - **PostOCR & EntityLinker** 
-  - **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the OpenStreetMap dictionary. PostOCR module finds words' candidates using [fuzzy query function](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-fuzzy-query.html) from elasticsearch, which contains the place name attribute from the Openstreetmap dictionary. Once PostOCR module identifies words' candidates, the module picks one candidate by the word popularity from the dictionary.
+  - **PostOCR** helps to verify the output and correct misspelled words from PatchTextSpotter using the OpenStreetMap dictionary. PostOCR module finds words' candidates using [fuzzy query function](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-fuzzy-query.html) from elasticsearch, which contains the place name attribute from the Openstreetmap dictionary. Once PostOCR module identifies words' candidates, the module picks one candidate by the word popularity from the dictionary
 
   - **EntityLinker** links each map text to the candidate geo-entities in the OpenStreetMap. The entity linking retrieves the candidates that satisfy two criteria: 1) the word candidate retrieved from PostOCR module contains the geo-entities' name 2) the geocoordinates of geo-entities are within the map boundary. (Geo-coordinates are obtained from GeocoordConverter)
 
