@@ -190,6 +190,7 @@ def run_pipeline(args):
     if module_text_spotting:
         assert os.path.exists(spotter_config), "Config file for spotter must exist!"
         os.chdir(text_spotting_model_dir) 
+        os.system("python setup.py build develop 1> /dev/null")
 
         for index, record in sample_map_df.iterrows():
 
@@ -215,16 +216,12 @@ def run_pipeline(args):
                     shutil.rmtree(map_spotting_output_dir)
                     os.makedirs(map_spotting_output_dir)        
 
-            if spotter_model == 'abcnet':
-                run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
-            elif spotter_model == 'testr':
-                run_spotting_command = f'python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
-            elif spotter_model in ['spotter_v2', 'spotter_v3']:
-                run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python demo/demo.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
-                print(run_spotting_command)
+            if spotter_model in ['testr', 'spotter-v2', 'palette']:
+                run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir}'
             else:
                 raise NotImplementedError
             
+            print(run_spotting_command)
             run_spotting_command  += ' 1> /dev/null'
         
             exe_ret = execute_command(run_spotting_command, if_print_command)            
@@ -239,6 +236,7 @@ def run_pipeline(args):
             #     raise NotImplementedError
 
             logging.info('Done text spotting for %s', map_name)
+            
     # time_text_spotting = time.time()
     
 
@@ -402,17 +400,29 @@ def main():
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
 
-    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2', "spotter_v3"], 
-        help='Select text spotting model option from ["abcnet","testr", "spotter_v2", "spotter_v3"]') # select text spotting model
+    parser.add_argument('--spotter_model', type=str, default='spotter-v2', choices=['testr', 'spotter-v2', "palette"], 
+        help='Select text spotting model option from ["testr", "spotter-v2", "palette"]') # select text spotting model
     parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
     parser.add_argument('--spotter_expt_name', type=str, default='exp',
         help='Name of spotter experiment, if empty using config file name') 
-    # python run.py --text_spotting_model_dir /home/maplord/rumsey/testr_v2/TESTR/
-    #               --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_splits/luna_omo_metadata_56628_20220724.csv 
-    #               --expt_name 57k_maps_r2 --module_text_spotting 
-    #               --spotter_model testr_v2 --spotter_config /home/maplord/rumsey/testr_v2/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml --spotter_expt_name testr_synmap
-
+    
+    # Running spotter-testr
+    # python run.py --text_spotting_model_dir /home/maplord/rumsey/spotter-testr/TESTR/
+    #               --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_splits/luna_omo_metadata_56628_20220724_part1.csv
+    #               --expt_name 57k_maps_r3 --module_text_spotting 
+    #               --spotter_model testr --spotter_config /home/maplord/rumsey/spotter-testr/TESTR/configs/TESTR/SynthMap/SynthMap_Polygon.yaml --spotter_expt_name test
+    # Running spotter-v2
+    # python run.py --text_spotting_model_dir /home/maplord/rumsey/spotter-v2/PALEJUN/
+    #               --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_splits/luna_omo_metadata_56628_20220724_part1.csv
+    #               --expt_name 57k_maps_r3 --module_text_spotting 
+    #               --spotter_model spotter-v2 --spotter_config /home/maplord/rumsey/spotter-v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml --spotter_expt_name test
+    # Running spotter-palette
+    # python run.py --text_spotting_model_dir /home/maplord/rumsey/spotter-palette/PALETTE/
+    #               --sample_map_csv_path /home/maplord/maplist_csv/luna_omo_splits/luna_omo_metadata_56628_20220724_part1.csv
+    #               --expt_name 57k_maps_r3 --module_text_spotting 
+    #               --spotter_model palette --spotter_config /home/maplord/rumsey/spotter-palette/PALETTR/configs/PALETTE/Pretrain/SynthMap_Polygon.yaml --spotter_expt_name test
+    
     parser.add_argument('--print_command', default=False, action='store_true')
     parser.add_argument('--gpu_id', type=int, default=0)
 
