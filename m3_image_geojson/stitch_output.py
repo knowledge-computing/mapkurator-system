@@ -56,8 +56,8 @@ def concatenate_and_convert_to_geojson(args):
     feature_collection = FeatureCollection(features)
     # with open(os.path.join(output_dir, map_subdir +'.geojson'), 'w') as f:
     #     dump(feature_collection, f)
-    with open(output_geojson, 'w') as f:
-        dump(feature_collection, f)
+    with open(output_geojson, 'w', encoding='utf8') as f:
+        dump(feature_collection, f, ensure_ascii=False)
     
     logging.info('Done generating geojson (img coord) for %s', map_subdir)
 
