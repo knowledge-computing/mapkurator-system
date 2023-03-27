@@ -1,6 +1,3 @@
-
----
-
 # Table of Contents
 - [Dataset Card](#dataset-card)
   - [Dataset Description](#dataset-description)
@@ -15,8 +12,8 @@
     - [Model Input and Output](#model-input-and-output)
 - [Additional Information](#additional-information)
   - [Licensing Information](#licensing-information)
-  - [Contributions](#contributions)    
-
+  - [Contributions](#Ccontribution-and-acknowledgement)    
+---
 
 # Dataset Card 
 
@@ -125,6 +122,6 @@ MIT License
 
 ### Contribution and Acknowledgement
 
-Thanks to [@zekun-li](https://zekun-li.github.io/),[@Jina-Kim](https://github.com/Jina-Kim), [@MinNamgung](https://github.com/MinNamgung) and [@linyijun](https://github.com/linyijun) for adding this dataset and models. 
+Thanks to [@zekun-li](https://zekun-li.github.io/), [@Jina-Kim](https://github.com/Jina-Kim), [@MinNamgung](https://github.com/MinNamgung) and [@linyijun](https://github.com/linyijun) for adding this dataset and models. 
 
 Thanks to [TESTR](https://github.com/mlpc-ucsd/TESTR) for an open-source text spotting model. 

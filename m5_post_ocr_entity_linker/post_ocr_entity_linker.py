@@ -47,10 +47,9 @@ def main(args):
 
         result_dict = dict()
         for map_text in set(unique_map_text):
-            # ------------------------- post-ocr
+            # retrieve post-ocr output
             map_text_candidate = lexical_search_query(map_text)
 
-            # ------------------------- entity linker
             if len(map_text_candidate) <= 3:
                 result_dict[map_text] = (map_text_candidate, [])
                 continue
@@ -98,8 +97,8 @@ def main(args):
             feature_data["properties"]["postocr_label"] = result_dict[str(feature_data['properties']['text']).lower()][0]
             feature_data["properties"]["osm_id"] = result_dict[str(feature_data['properties']['text']).lower()][1]
    
-    with open(os.path.join(output_dir, geojson_file.split("/")[-1]), 'w') as output_geojson:
-        geojson.dump(data, output_geojson)
+    with open(os.path.join(output_dir, geojson_file.split("/")[-1]), 'w', encoding='utf8') as output_geojson:
+        geojson.dump(data, output_geojson, ensure_ascii=False)
         
 
 if __name__ == '__main__':
