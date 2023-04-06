@@ -18,8 +18,8 @@ def main(args):
     sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '', regex=True)
     geojson_filename_id = geojson_file.split(".")[0].split("/")[-1]
 
-    if not os.path.isdir(output_dir + "tmp/"):
-        os.makedirs(output_dir + "tmp/")
+    if not os.path.isdir(os.path.join(output_dir, "tmp/")):
+        os.makedirs(os.path.join(output_dir, "tmp/"))
 
     row = sample_map_df[sample_map_df['external_id'] == geojson_filename_id]
     if not row.empty:
@@ -43,11 +43,11 @@ def main(args):
                 arr[:, :, 1] *= -1
                 img_feature['geometry']['coordinates'] = arr.tolist()
 
-        with open(output_dir + "tmp/" + geojson_filename_id + '.geojson', 'w', encoding='utf8') as geocoord_geojson:
+        with open(os.path.join(os.path.join(output_dir, "tmp/"), geojson_filename_id + '.geojson'), 'w', encoding='utf8') as geocoord_geojson:
             geojson.dump(img_data, geocoord_geojson, ensure_ascii=False)
 
-        input = '"' + output_dir + "tmp/" + geojson_filename_id + '.geojson"'
-        output = '"' + output_dir + geojson_filename_id + '.geojson"'
+        input = '"' + output_dir + "/tmp/" + geojson_filename_id + '.geojson"'
+        output = '"' + output_dir + "/" + geojson_filename_id + '.geojson"'
 
         if transform_method == 'affine':
             gecoord_convert_command = 'ogr2ogr -f "GeoJSON" ' + output + " " + input + ' -order 1 -s_srs epsg:4326 -t_srs epsg:3857 -skipfailures ' + gcp_str
@@ -62,8 +62,8 @@ def main(args):
             raise NotImplementedError
 
         ret_value = os.system(gecoord_convert_command)
-        if os.path.exists(output_dir + "tmp/" + geojson_filename_id + '.geojson'):
-            os.remove(output_dir + "tmp/" + geojson_filename_id + '.geojson')
+        if os.path.exists(os.path.join(os.path.join(output_dir, "tmp/"), geojson_filename_id + '.geojson')):
+            os.remove(os.path.join(os.path.join(output_dir, "tmp/"), geojson_filename_id + '.geojson'))
 
         if ret_value != 0:
             logging.info('Failed generating geocoord geojson for %s', geojson_file)

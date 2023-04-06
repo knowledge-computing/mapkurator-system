@@ -190,7 +190,7 @@ def run_pipeline(args):
     if module_text_spotting:
         assert os.path.exists(spotter_config), "Config file for spotter must exist!"
         os.chdir(text_spotting_model_dir) 
-        os.system("python setup.py build develop 1> /dev/null")
+        # os.system("python setup.py build develop 1> /dev/null")
 
         for index, record in sample_map_df.iterrows():
 
@@ -300,6 +300,9 @@ def run_pipeline(args):
             if 'error' in exe_ret:
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path': img_path, 'error': error}
+
+        if os.path.exists(os.path.join(os.path.join(map_kurator_system_dir, geocoord_output_dir), "tmp/")):
+            os.rmdir(os.path.join(os.path.join(map_kurator_system_dir, geocoord_output_dir), "tmp/"))
 #             elif 'time_usage' in exe_ret:
 #                 time_usage = exe_ret['time_usage']
 #                 time_usage_dict[external_id]['geocoord_geojson'] = time_usage
