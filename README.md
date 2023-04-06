@@ -67,7 +67,7 @@ A **fully automatic** pipeline to process a large amount of scanned historical m
 - **Blue boxes:** Inputs of the modules
 - **Green boxes:** Outputs of the modules
 
-<img width="1000" alt="image" src="https://user-images.githubusercontent.com/5383572/230233058-b4852134-9e2c-4622-af69-d8794cf298ed.png">
+<img width="1000" alt="image" src="https://user-images.githubusercontent.com/5383572/230442791-93497b26-5071-4c47-9947-7f6000306efb.png">
 
 ### Model Details
 - **ImageCropping** module divides huge map images (>10K pixels) to smaller image patches (1K pixels) so that TextSpotter could process.
