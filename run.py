@@ -66,6 +66,7 @@ def run_pipeline(args):
     module_img_geojson = args.module_img_geojson 
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_post_ocr_entity_linking = args.module_post_ocr_entity_linking
+    module_post_ocr_only = args.module_post_ocr_only
 
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
@@ -106,6 +107,7 @@ def run_pipeline(args):
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
     geocoord_output_dir = os.path.join(output_folder, expt_name, 'geocoord/' + spotter_expt_name)
     postocr_linking_output_dir = os.path.join(output_folder, expt_name, 'postocr_linking/'+ spotter_expt_name)
+    postocr_only_output_dir = os.path.join(output_folder, expt_name, 'postocr_only/'+ spotter_expt_name)
 
 
     if not os.path.isdir(expt_out_dir):
@@ -201,6 +203,7 @@ def run_pipeline(args):
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
+            # print(map_name)
 
             map_spotting_output_dir = os.path.join(spotting_output_dir, map_name)
             if not os.path.isdir(map_spotting_output_dir):
@@ -211,7 +214,7 @@ def run_pipeline(args):
                 if num_existing_json == num_existing_images:
                     continue
                 else:
-                    print(f'Re-run spotting for map {map_name}')
+                    print(f'{index}/{len(sample_map_df)}: Re-run spotting for map {map_name}')
                     import shutil
                     shutil.rmtree(map_spotting_output_dir)
                     os.makedirs(map_spotting_output_dir)        
@@ -221,7 +224,7 @@ def run_pipeline(args):
             else:
                 raise NotImplementedError
             
-            print(run_spotting_command)
+            # print(run_spotting_command)
             run_spotting_command  += ' 1> /dev/null'
         
             exe_ret = execute_command(run_spotting_command, if_print_command)            
@@ -235,7 +238,7 @@ def run_pipeline(args):
             # else:
             #     raise NotImplementedError
 
-            logging.info('Done text spotting for %s', map_name)
+            logging.info(f'{index}/{len(sample_map_df)}: Done text spotting for {map_name}')
             
     # time_text_spotting = time.time()
     
@@ -328,15 +331,26 @@ def run_pipeline(args):
 
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
-
+            
             input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
 
-            run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
-            exe_ret = execute_command(run_postocr_linking_command, if_print_command)
+            ### for debugging ###
+            out = map_name+ '.geojson'
+            out_lst = glob.glob(os.path.join(map_kurator_system_dir, postocr_linking_output_dir, "*.geojson"))
+            result_lst = []
+            for i in range(len(out_lst)):
+                result = out_lst[i].split("/")[-1]
+                result_lst.append(result)
+            if out not in result_lst: ### for debugging ###
 
-            if 'error' in exe_ret:
-                error = exe_ret['error']
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+                run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
+                # run_postocr_linking_command = 'python post_ocr.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
+                
+                exe_ret = execute_command(run_postocr_linking_command, if_print_command)
+
+                if 'error' in exe_ret:
+                    error = exe_ret['error']
+                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
 #             elif 'time_usage' in exe_ret:
 #                 time_usage = exe_ret['time_usage']
 #                 time_usage_dict[external_id]['postocr'] = time_usage
@@ -344,6 +358,44 @@ def run_pipeline(args):
 #                 raise NotImplementedError
 
 #     time_post_ocr_linking = time.time()
+
+
+    # ------------------------- post-OCR ONLY ------------------------------
+    if module_post_ocr_only:
+        
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
+
+        if not os.path.isdir(postocr_only_output_dir):
+            os.makedirs(postocr_only_output_dir)
+
+        for index, record in sample_map_df.iterrows():
+            
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path': None, 'error': 'key not in external_id_to_img_path_dict'}
+                continue
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+            
+            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
+
+            ### for debugging ###
+            # out = map_name+ '.geojson'
+            # out_lst = glob.glob(os.path.join(map_kurator_system_dir, postocr_only_output_dir, "*.geojson"))
+            # result_lst = []
+            # for i in range(len(out_lst)):
+            #     result = out_lst[i].split("/")[-1]
+            #     result_lst.append(result)
+            # if out not in result_lst: ### for debugging ###
+
+            run_postocr_only_command = 'python post_ocr_only.py --input_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
+            
+            exe_ret = execute_command(run_postocr_only_command, if_print_command)
+
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
 
 
     # --------------------- Time usage logging --------------------------
@@ -402,6 +454,7 @@ def main():
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
+    parser.add_argument('--module_post_ocr_only', default=False, action='store_true')
 
     parser.add_argument('--spotter_model', type=str, default='spotter-v2', choices=['testr', 'spotter-v2', "palette"], 
         help='Select text spotting model option from ["testr", "spotter-v2", "palette"]') # select text spotting model

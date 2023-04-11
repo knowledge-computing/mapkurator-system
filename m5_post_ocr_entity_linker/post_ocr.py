@@ -5,74 +5,77 @@ import http.client as http_client
 import nltk
 import re
 
+import elasticsearch
+import elasticsearch.helpers
+
 # set the debug level
-logging.getLogger("requests").setLevel(logging.WARNING)
+# logging.getLogger("requests").setLevel(logging.WARNING)
         
-headers = {
-    'Content-Type': 'application/json',
-}
+# headers = {
+#     'Content-Type': 'application/json',
+# }
 
 
-def scrolling(inputs, resp, fuzziness):
-    # Added
-    if resp.status_code == 200:
-        resp_json = json.loads(resp.text)
-        n_value = resp_json["hits"]["total"]["value"]
-        count = 0
+# def scrolling(inputs, resp, fuzziness):
+#     # Added
+#     if resp.status_code == 200:
+#         resp_json = json.loads(resp.text)
+#         n_value = resp_json["hits"]["total"]["value"]
+#         count = 0
 
-        if n_value > 10:
-            # Search memory control
-            if n_value > 10000:
-                json_size_body = '{"max_result_window":'+ str(n_value + 1) +'}'
+#         if n_value > 10:
+#             # Search memory control
+#             if n_value > 10000:
+#                 json_size_body = '{"max_result_window":'+ str(n_value + 1) +'}'
 
-                resp_setting = requests.put(f'http://localhost:9200/osm-voca/_settings', \
-                        data=json_size_body, \
-                        headers = headers)
-                scroll_time = 60
-            else: 
-                # Back to the default due to the search capability
-                json_size_body = '{"max_result_window": 10000 }'
+#                 resp_setting = requests.put(f'http://localhost:9200/osm-voca/_settings', \
+#                         data=json_size_body, \
+#                         headers = headers)
+#                 scroll_time = 60
+#             else: 
+#                 # Back to the default due to the search capability
+#                 json_size_body = '{"max_result_window": 10000 }'
 
-                resp_setting = requests.put(f'http://localhost:9200/osm-voca/_settings', \
-                        data=json_size_body, \
-                        headers = headers)
-                scroll_time = 30
+#                 resp_setting = requests.put(f'http://localhost:9200/osm-voca/_settings', \
+#                         data=json_size_body, \
+#                         headers = headers)
+#                 scroll_time = 30
             
-            # while count != n_value:
-            # Create Scroll ID and Search all results
-            # Fuzzy = 0, 1, 2
-            try:
-                q1 = '{"size":'+ str(n_value) +', "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
-                resp_page_search = requests.get(f'http://localhost:9200/osm-voca/_search?&scroll={scroll_time}m', \
-                    data=q1.encode("utf-8"), \
-                    headers = headers)
+#             # while count != n_value:
+#             # Create Scroll ID and Search all results
+#             # Fuzzy = 0, 1, 2
+#             try:
+#                 q1 = '{"size":'+ str(n_value) +', "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
+#                 resp_page_search = requests.get(f'http://localhost:9200/osm-voca/_search?&scroll={scroll_time}m', \
+#                     data=q1.encode("utf-8"), \
+#                     headers = headers)
 
-                if resp_page_search.status_code == 200:
-                    resp_json = json.loads(resp_page_search.text)
-                    s_id = resp_json["_scroll_id"]
+#                 if resp_page_search.status_code == 200:
+#                     resp_json = json.loads(resp_page_search.text)
+#                     s_id = resp_json["_scroll_id"]
 
-            except Exception as e:
-                print(e.message)
+#             except Exception as e:
+#                 print(e.message)
 
-        else:
-            s_id = 0
+#         else:
+#             s_id = 0
 
-        return s_id, resp_json
+#         return s_id, resp_json
 
-def remove_sid(s_id):
-    # Remove the scroll ID
-    # To avoid elasticsearch memory leakage
-    try:
-        json_close_page = '{"scroll_id": "'+ s_id +'"}'
-        resp_page = requests.delete(f'http://localhost:9200/_search/scroll', \
-                data=json_close_page, \
-                headers = headers)
+# def remove_sid(s_id):
+#     # Remove the scroll ID
+#     # To avoid elasticsearch memory leakage
+#     try:
+#         json_close_page = '{"scroll_id": "'+ s_id +'"}'
+#         resp_page = requests.delete(f'http://localhost:9200/_search/scroll', \
+#                 data=json_close_page, \
+#                 headers = headers)
         
-    except Exception as e:
-        print(e.message)
+#     except Exception as e:
+#         print(e.message)
 
 
-def lexical_search_query(target_text):
+def lexical_search_query(target_text, es):
     """ Query candidates and save them as 'postocr_label' """
 
     clean_txt = []
@@ -94,13 +97,23 @@ def lexical_search_query(target_text):
                         # edist 0
                         fuzziness = 0
                         inputs = target_text.lower()
-                        q1 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
-                        resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
-                                    data=q1.encode("utf-8"), \
-                                    headers = headers)
-                        s_id, resp_json = scrolling(inputs, resp, fuzziness)
-                        resp_json = json.loads(resp.text)
-                        test = resp_json["hits"]["hits"]
+                        # q1 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
+                        q1 = {'query': {'fuzzy': {'name': {'value': inputs, 'fuzziness': 0}}}}
+                        # es_results = elasticsearch.helpers.scan(es, index="osm-voca", preserve_order=True, query=q1)
+
+                        try:
+                            es_results = elasticsearch.helpers.scan(es, index="osm-voca", preserve_order=True, query=q1)
+                        except elasticsearch.ElasticsearchException as es_error:
+                            print(es_error)
+
+                        test = [item['_source'] for item in es_results if item["_source"]['name'] is not None]
+                        
+                        # resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                        #             data=q1.encode("utf-8"), \
+                        #             headers = headers)
+                        # s_id, resp_json = scrolling(inputs, resp, fuzziness)
+                        # resp_json = json.loads(resp.text)
+                        # test = resp_json["hits"]["hits"]
 
                     edist = []
                     edist_update = []
@@ -110,8 +123,8 @@ def lexical_search_query(target_text):
 
                     if test != 'NaN':
                         for tt in range(len(test)):
-                            if 'name' in test[tt]['_source']:
-                                candidate = test[tt]['_source']['name']
+                            if 'name' in test[tt]:
+                                candidate = test[tt]['name']
                                 edist.append(candidate)
 
                         for e in range(len(edist)):
@@ -122,20 +135,29 @@ def lexical_search_query(target_text):
                                 min_candidates = edist[e]
                                 edd_min_find = 1
                         
-                    if s_id != 0:
-                        remove_sid(s_id)
+                    # if s_id != 0:
+                    #     remove_sid(s_id)
 
                     # edd 1
                     if edd_min_find != 1:
                         # edist 1
                         fuzziness = 1
-                        q2 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
-                        resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
-                                    data=q2.encode("utf-8"), \
-                                    headers = headers)
-                        s_id, resp_json = scrolling(inputs, resp, fuzziness)
-                        resp_json = json.loads(resp.text)
-                        test = resp_json["hits"]["hits"]
+                        # q2 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
+                        # resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                        #             data=q2.encode("utf-8"), \
+                        #             headers = headers)
+                        # s_id, resp_json = scrolling(inputs, resp, fuzziness)
+                        # resp_json = json.loads(resp.text)
+                        # test = resp_json["hits"]["hits"] 
+
+                        q2 = {'query': {'fuzzy': {'name': {'value': inputs, 'fuzziness': fuzziness}}}}
+                        try:
+                            es_results = elasticsearch.helpers.scan(es, index="osm-voca", preserve_order=True, query=q2)
+                        except elasticsearch.ElasticsearchException as es_error:
+                            print(es_error)
+
+                        test = [item['_source'] for item in es_results if item["_source"]['name'] is not None]
+
 
                         edist = []
                         edist_count = []
@@ -144,8 +166,8 @@ def lexical_search_query(target_text):
 
                         if test != 'NaN':
                             for tt in range(len(test)):
-                                if 'name' in test[tt]['_source']:
-                                    candidate = test[tt]['_source']['message']
+                                if 'name' in test[tt]:
+                                    candidate = test[tt]['message']
                                     cand = candidate.split(',')[0]
                                     count = candidate.split(',')[1]
                                     edist.append(cand)
@@ -163,20 +185,27 @@ def lexical_search_query(target_text):
                                 min_candidates = edist_update[index]
                                 edd_min_find = 1
 
-                        if s_id != 0:
-                            remove_sid(s_id)
+                        # if s_id != 0:
+                        #     remove_sid(s_id)
 
                     # edd 2
                     if edd_min_find != 1:
                         # edist 2
                         fuzziness = 2
-                        q3 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
-                        resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
-                                    data=q3.encode("utf-8"), \
-                                    headers = headers)
-                        s_id, resp_json = scrolling(inputs, resp, fuzziness)
-                        resp_json = json.loads(resp.text)
-                        test = resp_json["hits"]["hits"]
+                        # q3 = '{"track_total_hits": true, "query": {"fuzzy": {"name": {"value": "'+ inputs +'", "fuzziness": "'+ str(fuzziness) +'"}}}}' 
+                        # resp = requests.get(f'http://localhost:9200/osm-voca/_search?', \
+                        #             data=q3.encode("utf-8"), \
+                        #             headers = headers)
+                        # s_id, resp_json = scrolling(inputs, resp, fuzziness)
+                        # resp_json = json.loads(resp.text)
+                        # test = resp_json["hits"]["hits"]
+                        q3 = {'query': {'fuzzy': {'name': {'value': inputs, 'fuzziness': fuzziness}}}}
+                        try:
+                            es_results = elasticsearch.helpers.scan(es, index="osm-voca", preserve_order=True, query=q3)
+                        except elasticsearch.ElasticsearchException as es_error:
+                            print(es_error)
+
+                        test = [item['_source'] for item in es_results if item["_source"]['name'] is not None]
 
                         edist = []
                         edist_count = []
@@ -185,8 +214,8 @@ def lexical_search_query(target_text):
 
                         if test != 'NaN':
                             for tt in range(len(test)):
-                                if 'name' in test[tt]['_source']:
-                                    candidate = test[tt]['_source']['message']
+                                if 'name' in test[tt]:
+                                    candidate = test[tt]['message']
                                     cand = candidate.split(',')[0]
                                     count = candidate.split(',')[1]
                                     edist.append(cand)
@@ -204,8 +233,8 @@ def lexical_search_query(target_text):
                                 min_candidates = edist_update[index]
                                 edd_min_find = 1
 
-                        if s_id != 0:
-                            remove_sid(s_id)
+                        # if s_id != 0:
+                        #     remove_sid(s_id)
 
                     if edd_min_find != 1:
                         min_candidates = False

@@ -48,7 +48,7 @@ def main(args):
         result_dict = dict()
         for map_text in set(unique_map_text):
             # retrieve post-ocr output
-            map_text_candidate = lexical_search_query(map_text)
+            map_text_candidate = lexical_search_query(map_text, es)
 
             if len(map_text_candidate) <= 3:
                 result_dict[map_text] = (map_text_candidate, [])
