@@ -29,6 +29,7 @@ es = elasticsearch.Elasticsearch([{'host': "127.0.0.1", 'port': 9200}], timeout=
 def main(args):
     geojson_file = args.in_geojson_file
     output_dir = args.out_geojson_dir
+    postocr_only = args.module_post_ocr_only
 
     with open(geojson_file) as f:
         data = geojson.load(f)
@@ -46,60 +47,74 @@ def main(args):
         map_polygon = Polygon(np.array([[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y], [min_x, min_y]]))
 
         result_dict = dict()
+        result_dict_postocr = dict()
         for map_text in set(unique_map_text):
             # retrieve post-ocr output
             map_text_candidate = lexical_search_query(map_text, es)
-
-            if len(map_text_candidate) <= 3:
-                result_dict[map_text] = (map_text_candidate, [])
-                continue
             
-            es_query = {'query': {'match': {'name': map_text_candidate.replace("'","\'")}}}
-            try:
-                es_results = elasticsearch.helpers.scan(es, index="osm", preserve_order=True, query=es_query)
-            except elasticsearch.ElasticsearchException as es_error:
-                print(es_error)
-                result_dict[map_text] = (map_text_candidate, [])
-                continue
+            if postocr_only:
+                result_dict_postocr[map_text] = map_text_candidate
 
-            es_results = [(hit["_source"]['source_table'], hit["_source"]['osm_id']) for hit in es_results if hit["_source"]['osm_id'] is not None]
-            
-            output_osm_ids = []
-            source_tables = set([table for table, _ in es_results])
-            for source_table in source_tables:
-                osm_ids = [osm_id for table, osm_id in es_results if table == source_table]
-                if "points" in source_table:
-                    sql = f"""SELECT osm_id
-                            FROM  {source_table}
-                            WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
-                            AND osm_id = ANY (%s)
-                    """
-                    cur.execute(sql,(osm_ids,))
-                    sql_result = cur.fetchall()
-
-                    if len(sql_result) != 0:
-                        output_osm_ids.extend([x[0] for x in sql_result])
+            else:
+                if len(map_text_candidate) <= 3:
+                    result_dict[map_text] = (map_text_candidate, [])
+                    continue
                 
-                elif "line" in source_table or "polygon" in source_table:
-                    sql = f"""SELECT osm_id
-                            FROM  {source_table}
-                            WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
-                            AND osm_id = ANY (%s)
-                    """
-                    cur.execute(sql,(osm_ids,))
-                    sql_result = cur.fetchall()
-                    if len(sql_result) != 0:
-                        output_osm_ids.extend([x[0] for x in sql_result])
+                es_query = {'query': {'match': {'name': map_text_candidate.replace("'","\'")}}}
+                try:
+                    es_results = elasticsearch.helpers.scan(es, index="osm", preserve_order=True, query=es_query)
+                except elasticsearch.ElasticsearchException as es_error:
+                    print(es_error)
+                    result_dict[map_text] = (map_text_candidate, [])
+                    continue
 
-            result_dict[map_text] = (map_text_candidate, output_osm_ids)
+                es_results = [(hit["_source"]['source_table'], hit["_source"]['osm_id']) for hit in es_results if hit["_source"]['osm_id'] is not None]
+                
+                output_osm_ids = []
+                source_tables = set([table for table, _ in es_results])
+                for source_table in source_tables:
+                    osm_ids = [osm_id for table, osm_id in es_results if table == source_table]
+                    if "points" in source_table:
+                        sql = f"""SELECT osm_id
+                                FROM  {source_table}
+                                WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                AND osm_id = ANY (%s)
+                        """
+                        cur.execute(sql,(osm_ids,))
+                        sql_result = cur.fetchall()
 
-        for feature_data in data['features']:
-            feature_data["properties"]["postocr_label"] = result_dict[str(feature_data['properties']['text']).lower()][0]
-            feature_data["properties"]["osm_id"] = result_dict[str(feature_data['properties']['text']).lower()][1]
-   
+                        if len(sql_result) != 0:
+                            output_osm_ids.extend([x[0] for x in sql_result])
+                    
+                    elif "line" in source_table or "polygon" in source_table:
+                        sql = f"""SELECT osm_id
+                                FROM  {source_table}
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                AND osm_id = ANY (%s)
+                        """
+                        cur.execute(sql,(osm_ids,))
+                        sql_result = cur.fetchall()
+                        if len(sql_result) != 0:
+                            output_osm_ids.extend([x[0] for x in sql_result])
+
+                result_dict[map_text] = (map_text_candidate, output_osm_ids)
+
+
+        if postocr_only:
+            for feature_data in data["features"]:
+                feature_data["properties"]["postocr_label"] = result_dict_postocr[str(feature_data["properties"]["text"]).lower()]
+
+        else:
+            for feature_data in data['features']:
+                feature_data["properties"]["postocr_label"] = result_dict[str(feature_data['properties']['text']).lower()][0]
+                feature_data["properties"]["osm_id"] = result_dict[str(feature_data['properties']['text']).lower()][1]
+
+
     with open(os.path.join(output_dir, geojson_file.split("/")[-1]), 'w', encoding='utf8') as output_geojson:
         geojson.dump(data, output_geojson, ensure_ascii=False)
         
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -107,6 +122,8 @@ if __name__ == '__main__':
                         help='input dir for results of M4 geocoordinate converter')
     parser.add_argument('--out_geojson_dir', type=str, default='data/100_maps_geojson_abc_linked/',
                         help='output dir for converted geojson files')
+    parser.add_argument('--module_post_ocr_only', default=False, action='store_true',
+                        help='postOCR only')
 
     args = parser.parse_args()
 

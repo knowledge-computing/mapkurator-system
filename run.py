@@ -319,8 +319,12 @@ def run_pipeline(args):
         
         os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
 
-        if not os.path.isdir(postocr_linking_output_dir):
-            os.makedirs(postocr_linking_output_dir)
+        if module_post_ocr_only: 
+            if not os.path.isdir(postocr_only_output_dir):
+                os.makedirs(postocr_only_output_dir)
+        else:
+            if not os.path.isdir(postocr_linking_output_dir):
+                os.makedirs(postocr_linking_output_dir)
 
         for index, record in sample_map_df.iterrows():
             
@@ -334,18 +338,15 @@ def run_pipeline(args):
             
             input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
 
-            ### for debugging ###
-            out = map_name+ '.geojson'
-            out_lst = glob.glob(os.path.join(map_kurator_system_dir, postocr_linking_output_dir, "*.geojson"))
-            result_lst = []
-            for i in range(len(out_lst)):
-                result = out_lst[i].split("/")[-1]
-                result_lst.append(result)
-            if out not in result_lst: ### for debugging ###
+            if module_post_ocr_only: 
+                run_postocr_only_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir) +  ' --module_post_ocr_only'
+                exe_ret = execute_command(run_postocr_only_command, if_print_command)
+                if 'error' in exe_ret:
+                    error = exe_ret['error']
+                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
 
+            else:
                 run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
-                # run_postocr_linking_command = 'python post_ocr.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
-                
                 exe_ret = execute_command(run_postocr_linking_command, if_print_command)
 
                 if 'error' in exe_ret:
@@ -358,44 +359,6 @@ def run_pipeline(args):
 #                 raise NotImplementedError
 
 #     time_post_ocr_linking = time.time()
-
-
-    # ------------------------- post-OCR ONLY ------------------------------
-    if module_post_ocr_only:
-        
-        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
-
-        if not os.path.isdir(postocr_only_output_dir):
-            os.makedirs(postocr_only_output_dir)
-
-        for index, record in sample_map_df.iterrows():
-            
-            external_id = record.external_id
-            if external_id not in external_id_to_img_path_dict:
-                error_reason_dict[external_id] = {'img_path': None, 'error': 'key not in external_id_to_img_path_dict'}
-                continue
-
-            img_path = external_id_to_img_path_dict[external_id]
-            map_name = os.path.basename(img_path).split('.')[0]
-            
-            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
-
-            ### for debugging ###
-            # out = map_name+ '.geojson'
-            # out_lst = glob.glob(os.path.join(map_kurator_system_dir, postocr_only_output_dir, "*.geojson"))
-            # result_lst = []
-            # for i in range(len(out_lst)):
-            #     result = out_lst[i].split("/")[-1]
-            #     result_lst.append(result)
-            # if out not in result_lst: ### for debugging ###
-
-            run_postocr_only_command = 'python post_ocr_only.py --input_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
-            
-            exe_ret = execute_command(run_postocr_only_command, if_print_command)
-
-            if 'error' in exe_ret:
-                error = exe_ret['error']
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
 
 
     # --------------------- Time usage logging --------------------------
