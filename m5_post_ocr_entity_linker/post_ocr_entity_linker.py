@@ -21,13 +21,18 @@ import time
 
 logging.basicConfig(level=logging.INFO)
 
-load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST")
-DB_USERNAME = os.getenv("DB_USERNAME")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+def save_postocr_results(in_geojson_data, unique_map_text_li, es_conn, output_dir, in_geojson_filename):
+    result_dict_postocr = dict()
+    for map_text in set(unique_map_text_li):
+        map_text_candidate = lexical_search_query(map_text, es_conn)
+        result_dict_postocr[map_text] = map_text_candidate
 
+    for feature_data in in_geojson_data["features"]:
+        feature_data["properties"]["postocr_label"] = result_dict_postocr[str(feature_data["properties"]["text"]).lower()]
+    
+    with open(os.path.join(output_dir, in_geojson_filename.split("/")[-1]), 'w', encoding='utf8') as output_geojson:
+        geojson.dump(in_geojson_data, output_geojson, ensure_ascii=False)
 
 
 def main(args):
@@ -39,11 +44,13 @@ def main(args):
         es = elasticsearch.Elasticsearch([{'host': "127.0.0.1", 'port': 9200}], timeout=1000)
         es_connected = es.ping()
     except:
-        logging.warning('elasticsearch.ConnectionError.ElasticConnectionError while running %s.' % geojson_file)
+        logging.warning('elasticsearch.ConnectionError.ElasticConnectionError while running %s', geojson_file.split("/")[-1])
         return
     if not es_connected:
-        logging.warning('Error on elasticsearch connection while running %s.' % geojson_file)
+        logging.warning('Error on elasticsearch connection while running %s', geojson_file.split("/")[-1])
         return
+    es_logger = elasticsearch.logger
+    es_logger.setLevel(elasticsearch.logging.WARNING)
 
     with open(geojson_file) as f:
         data = geojson.load(f)
@@ -59,24 +66,20 @@ def main(args):
             unique_map_text.append(str(feature_data['properties']['text']).lower())
 
         if postocr_only:
-            result_dict_postocr = dict()
-            for map_text in set(unique_map_text):
-                map_text_candidate = lexical_search_query(map_text, es)
-                result_dict_postocr[map_text] = map_text_candidate
-
-            for feature_data in data["features"]:
-                feature_data["properties"]["postocr_label"] = result_dict_postocr[str(feature_data["properties"]["text"]).lower()]
-
-            with open(os.path.join(output_dir, geojson_file.split("/")[-1]), 'w', encoding='utf8') as output_geojson:
-                geojson.dump(data, output_geojson, ensure_ascii=False)
-
-            logging.info('Done generating geojson for %s', geojson_file.split("/")[-1])
+            save_postocr_results(data, unique_map_text, es, output_dir, geojson_file)
+            logging.info('Done generating standalone post-ocr geojson for %s', geojson_file.split("/")[-1])
             return
+
+        load_dotenv()
+        DB_HOST = os.getenv("DB_HOST")
+        DB_USERNAME = os.getenv("DB_USERNAME")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+        DB_NAME = os.getenv("DB_NAME")
 
         try:
             conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD)
         except:
-            logging.warning('Error on psycopg2 connection while running %s.' % geojson_file)
+            logging.warning('Error on psycopg2 connection while running %s', geojson_file.split("/")[-1])
             return
 
         cur = conn.cursor()
@@ -108,7 +111,9 @@ def main(args):
             continents.append("central_america")
 
         if len(continents) != 1:
-            logging.warning('More than one continent to query - %s.' % geojson_file)
+            logging.warning('More than one continent to query - %s', geojson_file.split("/")[-1])
+            save_postocr_results(data, unique_map_text, es, output_dir, geojson_file)
+            logging.info('Done generating standalone post-ocr geojson for %s', geojson_file.split("/")[-1])
             return
 
         continents = [continent + "." + table_name for continent in continents for table_name in table_names]
@@ -154,13 +159,8 @@ def main(args):
                             WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                             AND osm_id = ANY (%s)
                     """
-                    # print(sql)
-                    # print(osm_ids)
-                    # print("point contains starts: # of features", len(osm_ids))
-                    # start = time.time()
                     cur.execute(sql,(osm_ids,))
                     sql_result = cur.fetchall()
-                    # print("time:", time.time() - start)
                     if len(sql_result) != 0:
                         output_osm_ids.extend([x[0] for x in sql_result])
 
@@ -170,13 +170,8 @@ def main(args):
                             WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                             AND osm_id = ANY (%s)
                     """
-                    # print(sql)
-                    # print(osm_ids)
-                    # print("polygon, line intersect starts: # of features", len(osm_ids))
-                    # start = time.time()
                     cur.execute(sql,(osm_ids,))
                     sql_result = cur.fetchall()
-                    # print("time:", time.time() - start)
                     if len(sql_result) != 0:
                         output_osm_ids.extend([x[0] for x in sql_result])
 
