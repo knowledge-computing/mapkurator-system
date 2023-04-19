@@ -6,19 +6,6 @@ Our documentation website is up! [https://knowledge-computing.github.io/mapkurat
 
 ---------
 
-- [Dataset Card](#dataset-card)
-  - [Dataset Description](#dataset-description)
-    - [Dataset Download Link](#dataset-download-link)
-    - [Dataset Languages](#dataset-languages)
-  - [Dataset Structure](#dataset-structure)
-    - [Data Fields](#data-fields)
-- [Additional Information](#additional-information)
-  - [Licensing Information](#licensing-information)
-  - [Contributions](#Ccontribution-and-acknowledgement)    
-
-
-# Dataset Card 
-
 ## Dataset Description
 
 Map text recognized from the georeferenced Rumsey historical map collection.
