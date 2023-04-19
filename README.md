@@ -2,7 +2,7 @@
 
 **[UPDATE Apr 18, 2023]**  
 
-Our documentation website is up! https://knowledge-computing.github.io/mapkurator-doc/](https://knowledge-computing.github.io/mapkurator-doc/#/)
+Our documentation website is up! [https://knowledge-computing.github.io/mapkurator-doc/](https://knowledge-computing.github.io/mapkurator-doc/#/)
 
 ==========================================================================
 
