@@ -7,7 +7,7 @@ mapKurator is a fully automatic pipeline developed by the **Knowledge Computing 
 
 ---------
 
-## Derived Dataset Processed by mapKurator
+## Derived Dataset Processed by mapKurator System
 
 Map text recognized from the georeferenced Rumsey historical map collection.
 
