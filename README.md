@@ -47,4 +47,3 @@ MIT License
 
 Thanks to [@zekun-li](https://zekun-li.github.io/), [@Jina-Kim](https://github.com/Jina-Kim), [@MinNamgung](https://github.com/MinNamgung) and [@linyijun](https://github.com/linyijun) for adding this dataset and models. 
 
-Thanks to [TESTR](https://github.com/mlpc-ucsd/TESTR) for an open-source text spotting model. 
