@@ -6,7 +6,6 @@ Our documentation website is up! [https://knowledge-computing.github.io/mapkurat
 
 ==========================================================================
 
-# Table of Contents
 - [Dataset Card](#dataset-card)
   - [Dataset Description](#dataset-description)
     - [Dataset Download Link](#dataset-download-link)
@@ -16,7 +15,7 @@ Our documentation website is up! [https://knowledge-computing.github.io/mapkurat
 - [Additional Information](#additional-information)
   - [Licensing Information](#licensing-information)
   - [Contributions](#Ccontribution-and-acknowledgement)    
----
+
 
 # Dataset Card 
 
