@@ -3,7 +3,7 @@
 
 **[New]**: Our documentation website for mapKurator system is up! [https://knowledge-computing.github.io/mapkurator-doc/](https://knowledge-computing.github.io/mapkurator-doc/#/)
 
-mapKurator is a fully automatic pipeline developed by the **Knowledge Computing Lab** at the **University of Minnesota** to process a large number of scanned historical map images. Outputs include the recognized text labels, label bounding polygons, labels after post-OCR correction, and a geo-entity identifier from OpenStreetMap.
+mapKurator is a fully automatic pipeline developed by the [**Knowledge Computing Lab**](https://knowledge-computing.github.io/) at the **University of Minnesota** to process a large number of scanned historical map images. Outputs include the recognized text labels, label bounding polygons, labels after post-OCR correction, and a geo-entity identifier from OpenStreetMap.
 
 ---------
 
