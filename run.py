@@ -304,8 +304,6 @@ def run_pipeline(args):
                 error = exe_ret['error']
                 error_reason_dict[external_id] = {'img_path': img_path, 'error': error}
 
-        if os.path.exists(os.path.join(os.path.join(map_kurator_system_dir, geocoord_output_dir), "tmp/")):
-            os.rmdir(os.path.join(os.path.join(map_kurator_system_dir, geocoord_output_dir), "tmp/"))
 #             elif 'time_usage' in exe_ret:
 #                 time_usage = exe_ret['time_usage']
 #                 time_usage_dict[external_id]['geocoord_geojson'] = time_usage
