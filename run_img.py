@@ -68,8 +68,8 @@ def run_pipeline(args):
     module_text_spotting = args.module_text_spotting
     module_img_geojson = args.module_img_geojson 
     module_geocoord_geojson = args.module_geocoord_geojson 
-    module_entity_linking = args.module_entity_linking
-    module_post_ocr = args.module_post_ocr
+    module_post_ocr_entity_linking = args.module_post_ocr_entity_linking
+    module_post_ocr_only = args.module_post_ocr_only
 
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
@@ -118,8 +118,10 @@ def run_pipeline(args):
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    postocr_output_dir = os.path.join(output_folder, expt_name, 'postocr/'+ spotter_expt_name)
+    # postocr_output_dir = os.path.join(output_folder, expt_name, 'postocr/'+ spotter_expt_name)
     geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
+    postocr_linking_output_dir = os.path.join(output_folder, expt_name, 'postocr_linking/'+ spotter_expt_name)
+    postocr_only_output_dir = os.path.join(output_folder, expt_name, 'postocr_only/'+ spotter_expt_name)
 
     
 
@@ -284,12 +286,16 @@ def run_pipeline(args):
     time_img_geojson = time.time()
 
     # ------------------------- post-OCR ------------------------------
-    if module_post_ocr:
+    if module_post_ocr_entity_linking:
         
-        os.chdir(os.path.join(map_kurator_system_dir, 'm6_post_ocr'))
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
 
-        if not os.path.isdir(postocr_output_dir):
-            os.makedirs(postocr_output_dir)
+        if module_post_ocr_only: 
+            if not os.path.isdir(postocr_only_output_dir):
+                os.makedirs(postocr_only_output_dir)
+        else:
+            if not os.path.isdir(postocr_linking_output_dir):
+                os.makedirs(postocr_linking_output_dir)
 
         for index, record in sample_map_df.iterrows():
             
@@ -302,10 +308,22 @@ def run_pipeline(args):
             map_name = os.path.basename(img_path).split('.')[0]
 
             input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
-            geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
-            print('input_geojson_file',input_geojson_file)
-            print('geojson_postocr_output_file',geojson_postocr_output_file)
-            run_postocr_command = 'python post_ocr.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
+            
+            if module_post_ocr_only: 
+                run_postocr_only_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir) +  ' --module_post_ocr_only'
+                exe_ret = execute_command(run_postocr_only_command, if_print_command)
+                # if 'error' in exe_ret:
+                #     error = exe_ret['error']
+                #     error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+
+            else:
+                run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
+                exe_ret = execute_command(run_postocr_linking_command, if_print_command)
+
+            #geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
+            # print('input_geojson_file',input_geojson_file)
+            # print('geojson_postocr_output_file',geojson_postocr_output_file)
+            # run_postocr_command = 'python post_ocr.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
 
             exe_ret = execute_command(run_postocr_command, if_print_command)
             print('exe_ret',exe_ret)
@@ -351,18 +369,18 @@ def run_pipeline(args):
 
     time_geocoord_geojson = time.time()
 
-    # ------------------------- Link entities in OSM ------------------------------
-    if module_entity_linking:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
+    # # ------------------------- Link entities in OSM ------------------------------
+    # if module_entity_linking:
+    #     os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
         
-        geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker', 'data/100_maps_geojson_abc_linked/')
-        if not os.path.isdir(geojson_output_dir):
-            os.makedirs(geojson_output_dir)
+    #     geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker', 'data/100_maps_geojson_abc_linked/')
+    #     if not os.path.isdir(geojson_output_dir):
+    #         os.makedirs(geojson_output_dir)
 
-        run_linker_command = 'python post_ocr_entity_linker.py --sample_map_path '+ input_img_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
-        execute_command(run_linker_command, if_print_command)
+    #     run_linker_command = 'python post_ocr_entity_linker.py --sample_map_path '+ input_img_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
+    #     execute_command(run_linker_command, if_print_command)
 
-    time_entity_linking = time.time()
+    # time_entity_linking = time.time()
 
 
     # --------------------- Time usage logging --------------------------
@@ -421,8 +439,8 @@ def main():
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
-    parser.add_argument('--module_entity_linking', default=False, action='store_true')
-    parser.add_argument('--module_post_ocr', default=False, action='store_true')
+    parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
+    parser.add_argument('--module_post_ocr_only', default=False, action='store_true')
 
     
     parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2','spotter_v3'], 
