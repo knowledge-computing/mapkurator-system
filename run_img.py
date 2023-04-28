@@ -384,14 +384,14 @@ def run_pipeline(args):
 
 
     # --------------------- Time usage logging --------------------------
-    print('\n')
-    logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
-    logging.info('Time for Cropping : %d',time_cropping - time_geotiff)
-    logging.info('Time for text spotting : %d',time_text_spotting - time_cropping)
-    logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
-    logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
-    logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
-    logging.info('Time for post OCR : %d',time_post_ocr - time_img_geojson)
+    # print('\n')
+    # logging.info('Time for generating geotiff: %d', time_geotiff - time_start)
+    # logging.info('Time for Cropping : %d',time_cropping - time_geotiff)
+    # logging.info('Time for text spotting : %d',time_text_spotting - time_cropping)
+    # logging.info('Time for generating geojson in img coordinate : %d',time_img_geojson - time_text_spotting)
+    # logging.info('Time for generating geojson in geo coordinate : %d',time_geocoord_geojson - time_img_geojson)
+    # logging.info('Time for entity linking : %d',time_entity_linking - time_geocoord_geojson)
+    # logging.info('Time for post OCR : %d',time_post_ocr - time_img_geojson)
 
     # time_usage_df = pd.DataFrame.from_dict(time_usage_dict, orient='index')
     # time_usage_log_path = os.path.join(output_folder, expt_name, 'time_usage.csv')
