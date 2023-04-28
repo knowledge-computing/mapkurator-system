@@ -325,7 +325,7 @@ def run_pipeline(args):
             # print('geojson_postocr_output_file',geojson_postocr_output_file)
             # run_postocr_command = 'python post_ocr.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
 
-            exe_ret = execute_command(run_postocr_command, if_print_command)
+            # exe_ret = execute_command(run_postocr_command, if_print_command)
             print('exe_ret',exe_ret)
             # if 'error' in exe_ret:
             #     error = exe_ret['error']
