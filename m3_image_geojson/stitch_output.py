@@ -44,7 +44,9 @@ def concatenate_and_convert_to_geojson(args):
         polygon_x, polygon_y = list(line_data['polygon_x']), list(line_data['polygon_y'])
         
         if eval_bool ==  False: 
-             # y is kept to be positive.  Needs to be negative for QGIS visualization
+            # y is kept to be positive.  Needs to be negative for QGIS visualization
+            # For flip coordinates: [x,-y] for x,y in zip(polygon_x, polygon_y), 
+            # To form a closed loop polygon: [polygon_x[0], -polygon_y[0]], otherwise QGIS can not display the polygon
             polygon = Polygon([[[x,-y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], -polygon_y[0]]]])
         else:
             polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
