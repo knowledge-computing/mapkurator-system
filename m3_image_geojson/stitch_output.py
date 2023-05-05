@@ -7,7 +7,9 @@ from geojson import Polygon, Feature, FeatureCollection, dump
 import logging
 import pdb
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO) 
+
+logging.basicConfig(level=logging.ERROR) 
 pd.options.mode.chained_assignment = None
 
 def concatenate_and_convert_to_geojson(args):
@@ -26,12 +28,17 @@ def concatenate_and_convert_to_geojson(args):
         patch_index_h, patch_index_w = os.path.basename(file_path).split('.')[0].split('_')
         patch_index_h = int(patch_index_h[1:])
         patch_index_w = int(patch_index_w[1:])
+
         try:
-            df = pd.read_json(file_path)
+            # fix text column to be type 'object', to avoid errors (e.g. '6' -> 6.0 'NAn' -> nan)
+            df = pd.read_json(file_path, dtype={'text':object})
         except pd.errors.EmptyDataError:
             logging.warning('%s is empty. Skipping.' % file_path)
-            
-
+            continue 
+        except KeyError as ke:
+            logging.warning('%s has no detected labels. Skipping.' %file_path)
+            continue 
+        
         for index, line_data in df.iterrows():
             df['polygon_x'][index] = np.array(df['polygon_x'][index]) + shift_size * patch_index_w
             df['polygon_y'][index] = np.array(df['polygon_y'][index]) + shift_size * patch_index_h
