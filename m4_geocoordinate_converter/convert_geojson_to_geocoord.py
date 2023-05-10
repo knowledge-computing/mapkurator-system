@@ -14,14 +14,15 @@ def main(args):
     geojson_file = args.in_geojson_file
     output_dir = args.out_geojson_dir
 
-    sample_map_df = pd.read_csv(args.sample_map_path, dtype={'external_id': str})
-    sample_map_df['external_id'] = sample_map_df['external_id'].str.strip("'").str.replace('.', '', regex=True)
+    sample_map_df = pd.read_csv(args.sample_map_path, dtype={'image_no': str})
+    sample_map_df['image_no'] = sample_map_df['image_no'].str.replace('.1.jp2', '', regex=False).str.replace('.jp2', '', regex=False)
+    
     geojson_filename_id = geojson_file.split(".")[0].split("/")[-1]
 
     if not os.path.isdir(os.path.join(output_dir, "tmp/")):
         os.makedirs(os.path.join(output_dir, "tmp/"))
 
-    row = sample_map_df[sample_map_df['external_id'] == geojson_filename_id]
+    row = sample_map_df[sample_map_df['image_no'] == geojson_filename_id]
     if not row.empty:
         gcps = ast.literal_eval(row.iloc[0]['gcps'])
         gcp_str = ''
