@@ -6,6 +6,7 @@ import ast
 import pandas as pd
 import numpy as np
 import geojson
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,7 +37,17 @@ def main(args):
 
         # minus in y
         with open(geojson_file) as img_geojson:
-            img_data = geojson.load(img_geojson)
+            try:
+                img_data = geojson.load(img_geojson)
+            except json.decoder.JSONDecodeError:
+                if os.stat(img_geojson).st_size == 0:
+                    with open(os.path.join(output_dir, geojson_filename_id + '.geojson'), 'w') as fp:
+                        pass
+                else:
+                    logging.info('JSONDecodeError %s', geojson_file)
+                continue
+            
+
             for img_feature in img_data['features']:
                 arr = np.array(img_feature['geometry']['coordinates'])
                 img_feature['properties']['img_coordinates'] = np.array(arr).reshape(-1, 2).tolist()
