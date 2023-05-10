@@ -44,7 +44,14 @@ def concatenate_and_convert_to_geojson(args):
             df['polygon_y'][index] = np.array(df['polygon_y'][index]) + shift_size * patch_index_h
         map_data.append(df)
 
+    if len(map_data) == 0: 
+        with open(output_geojson, 'w', encoding='utf8') as f:
+            pass 
+        print('created empty geojson for', output_geojson)
+        return 0 
+        
     map_df = pd.concat(map_data)
+
 
     features = []
     for index, line_data in map_df.iterrows():
