@@ -40,13 +40,13 @@ def main(args):
             try:
                 img_data = geojson.load(img_geojson)
             except json.decoder.JSONDecodeError:
-                if os.stat(img_geojson).st_size == 0:
+                if os.stat(geojson_file).st_size == 0:
                     with open(os.path.join(output_dir, geojson_filename_id + '.geojson'), 'w') as fp:
                         pass
+                    logging.info('Done generating empty geocoord geojson for %s', geojson_file)
                 else:
                     logging.info('JSONDecodeError %s', geojson_file)
-                continue
-            
+                return
 
             for img_feature in img_data['features']:
                 arr = np.array(img_feature['geometry']['coordinates'])
