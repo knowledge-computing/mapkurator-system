@@ -67,6 +67,7 @@ def run_pipeline(args):
     module_geocoord_geojson = args.module_geocoord_geojson 
     module_post_ocr_entity_linking = args.module_post_ocr_entity_linking
     module_post_ocr_only = args.module_post_ocr_only
+    module_post_ocr = args.module_post_ocr
 
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
@@ -294,7 +295,18 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
 
+            # current_files_list = glob.glob(os.path.join(map_kurator_system_dir, geocoord_output_dir, "*.geojson"))
+
+            # saved_map_list = []
+            # for mapname in current_files_list:
+            #     only_map = mapname.split("/")[-1]#.strip().replace(".geojson", "")
+            #     saved_map_list.append(only_map)
+
             in_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
+            # current_map = in_geojson.split("/")[-1]
+
+            # if current_map not in saved_map_list: 
+                # print("running missing file",current_map)
 
             run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path ' + os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_file ' + in_geojson + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, geocoord_output_dir)
 
@@ -311,6 +323,42 @@ def run_pipeline(args):
 #                 raise NotImplementedError
 
 #     time_geocoord_geojson = time.time()
+
+    # ------------------------- post-OCR ------------------------------
+    if module_post_ocr:
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr'))
+
+        if not os.path.isdir(postocr_only_output_dir):
+            os.makedirs(postocr_only_output_dir)
+        
+        for index, record in sample_map_df.iterrows():
+            
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path': None, 'error': 'key not in external_id_to_img_path_dict'}
+                continue
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+            
+            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
+
+            run_postocr_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
+            
+            exe_ret = execute_command(run_postocr_command, if_print_command)
+            
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
+
+    #         elif 'time_usage' in exe_ret:
+    #             time_usage = exe_ret['time_usage']
+    #             time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+    #         else:
+    #             raise NotImplementedError
+
+        # time_geocoord_geojson = time.time()
+                
 
     # ------------------------- post-OCR & entity liking ------------------------------
     if module_post_ocr_entity_linking:
@@ -337,14 +385,25 @@ def run_pipeline(args):
             input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
 
             if module_post_ocr_only: 
-                run_postocr_only_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir) +  ' --module_post_ocr_only'
-                exe_ret = execute_command(run_postocr_only_command, if_print_command)
-                if 'error' in exe_ret:
-                    error = exe_ret['error']
-                    error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
+                # ### To not run if map has been processed
+                current_files_list = glob.glob(os.path.join(map_kurator_system_dir, postocr_only_output_dir, "*.geojson"))
+
+                saved_map_list = []
+                for mapname in current_files_list:
+                    only_map = mapname.split("/")[-1]#.strip().replace(".geojson", "")
+                    saved_map_list.append(only_map)
+                
+                current_map = input_geojson_file.split("/")[-1]
+
+                if current_map not in saved_map_list: ##### until here
+                    run_postocr_only_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir) +  ' --module_post_ocr_only'
+                    exe_ret = execute_command(run_postocr_only_command, if_print_command)
+                    if 'error' in exe_ret:
+                        error = exe_ret['error']
+                        error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
 
             else:
-                run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
+                run_postocr_linking_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
                 exe_ret = execute_command(run_postocr_linking_command, if_print_command)
 
                 if 'error' in exe_ret:
@@ -416,6 +475,7 @@ def main():
     parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_only', default=False, action='store_true')
+    parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
     parser.add_argument('--spotter_model', type=str, default='spotter-v2', choices=['testr', 'spotter-v2', "palette"], 
         help='Select text spotting model option from ["testr", "spotter-v2", "palette"]') # select text spotting model
