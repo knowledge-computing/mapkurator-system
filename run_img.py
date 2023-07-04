@@ -58,7 +58,7 @@ def run_pipeline(args):
     # -------------------------  Pass arguments -----------------------------------------
     map_kurator_system_dir = args.map_kurator_system_dir
     text_spotting_model_dir = args.text_spotting_model_dir
-    sample_map_path = args.sample_map_csv_path
+    input_dir_path = args.input_dir_path
     expt_name = args.expt_name
     output_folder = args.output_folder
 
@@ -91,7 +91,7 @@ def run_pipeline(args):
     # else:
     #     raise NotImplementedError
 
-    input_img_path = sample_map_path 
+    input_img_path = input_dir_path 
     sample_map_df = pd.DataFrame(columns = ["external_id"])
     for images in os.listdir(input_img_path):
             tmp_path={"external_id": input_img_path+images}
@@ -157,7 +157,7 @@ def run_pipeline(args):
             os.makedirs(geotiff_output_dir)
 
         # use converted jpg folder instead of original sid folder
-        run_geotiff_command = 'python convert_image_to_geotiff.py --sid_root_dir /data2/rumsey_sid_to_jpg/ --sample_map_path '+ input_img_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
+        run_geotiff_command = 'python convert_image_to_geotiff.py --sid_root_dir /data2/rumsey_sid_to_jpg/ --input_dir_path '+ input_img_path +' --out_geotiff_dir '+geotiff_output_dir  # can change params in argparse
         exe_ret = execute_command(run_geotiff_command, if_print_command)
         if 'error' in exe_ret:
             error = exe_ret['error']
@@ -354,7 +354,7 @@ def run_pipeline(args):
 
             in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
 
-            run_converter_command = 'python convert_geojson_to_geocoord.py --sample_map_path '+ os.path.join(map_kurator_system_dir, input_img_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
+            run_converter_command = 'python convert_geojson_to_geocoord.py --input_dir_path '+ os.path.join(map_kurator_system_dir, input_img_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
 
             exe_ret = execute_command(run_converter_command, if_print_command)
 
@@ -429,7 +429,7 @@ def main():
 
     parser.add_argument('--map_kurator_system_dir', type=str, default='/home/maplord/rumsey/mapkurator-system/')
     parser.add_argument('--text_spotting_model_dir', type=str, default='/home/maplord/rumsey/TESTR/')
-    parser.add_argument('--sample_map_csv_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv') # Original: sample_US_jp2_100_maps.csv
+    parser.add_argument('--input_dir_path', type=str, default='m1_geotiff/data/sample_US_jp2_100_maps.csv') # Original: sample_US_jp2_100_maps.csv
     parser.add_argument('--output_folder', type=str, default='/data2/rumsey_output') # Original: /data2/rumsey_output
     parser.add_argument('--expt_name', type=str, default='1000_maps') # output prefix 
     
