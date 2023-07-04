@@ -206,6 +206,7 @@ def run_pipeline(args):
     if module_text_spotting:
         assert os.path.exists(spotter_config), "Config file for spotter must exist!"
         os.chdir(text_spotting_model_dir) 
+        os.system("python setup.py build develop 1> /dev/null")
 
         for index, record in sample_map_df.iterrows():
 
@@ -222,9 +223,8 @@ def run_pipeline(args):
                 os.makedirs(map_spotting_output_dir)
         
             print(os.path.join(cropping_output_dir,map_name))
-            if spotter_model == 'abcnet':
-                run_spotting_command = f'python tools/inference.py --config-file {spotter_config} --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.WEIGHTS ctw1500_attn_R_50.pth'
-            elif spotter_model == 'testr':
+    
+            if spotter_model == 'testr':
                 run_spotting_command = f'python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.TRANSFORMER.INFERENCE_TH_TEST 0.3'
                 # print(run_spotting_command)
             elif spotter_model in ['spotter_v2', 'spotter_v3']:
