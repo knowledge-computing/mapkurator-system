@@ -38,5 +38,5 @@ Output geojson file is named after the external ID of origina map image.
 
 ### Licensing Information
 
-MIT License
+CC BY-NC 2.0
 
