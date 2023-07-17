@@ -278,9 +278,45 @@ def run_pipeline(args):
             
     # time_img_geojson = time.time()
 
+
+    # ------------------------- post-OCR ------------------------------
+    if module_post_ocr:
+        os.chdir(os.path.join(map_kurator_system_dir, 'm4_post_ocr'))
+
+        if not os.path.isdir(postocr_only_output_dir):
+            os.makedirs(postocr_only_output_dir)
+        
+        for index, record in sample_map_df.iterrows():
+            
+            external_id = record.external_id
+            if external_id not in external_id_to_img_path_dict:
+                error_reason_dict[external_id] = {'img_path': None, 'error': 'key not in external_id_to_img_path_dict'}
+                continue
+
+            img_path = external_id_to_img_path_dict[external_id]
+            map_name = os.path.basename(img_path).split('.')[0]
+            
+            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
+
+            run_postocr_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
+            
+            exe_ret = execute_command(run_postocr_command, if_print_command)
+            
+            if 'error' in exe_ret:
+                error = exe_ret['error']
+                error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
+
+    #         elif 'time_usage' in exe_ret:
+    #             time_usage = exe_ret['time_usage']
+    #             time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+    #         else:
+    #             raise NotImplementedError
+
+        # time_geocoord_geojson = time.time()
+
     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
     if module_geocoord_geojson:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
+        os.chdir(os.path.join(map_kurator_system_dir, 'm5_geocoordinate_converter'))
 
         if not os.path.isdir(geocoord_output_dir):
             os.makedirs(geocoord_output_dir)
@@ -324,41 +360,6 @@ def run_pipeline(args):
 
 #     time_geocoord_geojson = time.time()
 
-    # ------------------------- post-OCR ------------------------------
-    if module_post_ocr:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr'))
-
-        if not os.path.isdir(postocr_only_output_dir):
-            os.makedirs(postocr_only_output_dir)
-        
-        for index, record in sample_map_df.iterrows():
-            
-            external_id = record.external_id
-            if external_id not in external_id_to_img_path_dict:
-                error_reason_dict[external_id] = {'img_path': None, 'error': 'key not in external_id_to_img_path_dict'}
-                continue
-
-            img_path = external_id_to_img_path_dict[external_id]
-            map_name = os.path.basename(img_path).split('.')[0]
-            
-            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
-
-            run_postocr_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
-            
-            exe_ret = execute_command(run_postocr_command, if_print_command)
-            
-            if 'error' in exe_ret:
-                error = exe_ret['error']
-                error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
-
-    #         elif 'time_usage' in exe_ret:
-    #             time_usage = exe_ret['time_usage']
-    #             time_usage_dict[external_id]['geocoord_geojson'] = time_usage
-    #         else:
-    #             raise NotImplementedError
-
-        # time_geocoord_geojson = time.time()
-                
 
     # --------------------- Time usage logging --------------------------
 #     print('\n')
