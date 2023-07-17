@@ -72,10 +72,10 @@ def main(args):
         for feature_data in data['features']:
             unique_map_text.append(str(feature_data['properties']['text']).lower())
         
-        if postocr_only:
-            save_postocr_results(data, unique_map_text, es, output_dir, geojson_file)
-            logging.info('Done generating standalone post-ocr geojson for %s', geojson_file.split("/")[-1])
-            return
+        # if postocr_only:
+        save_postocr_results(data, unique_map_text, es, output_dir, geojson_file)
+        logging.info('Done generating standalone post-ocr geojson for %s', geojson_file.split("/")[-1])
+        # return
 
 
 if __name__ == '__main__':
