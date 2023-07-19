@@ -119,7 +119,7 @@ def run_pipeline(args):
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
     # postocr_output_dir = os.path.join(output_folder, expt_name, 'postocr/'+ spotter_expt_name)
-    geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
+    # geojson_output_dir = os.path.join(output_folder, expt_name, 'geojson_' + spotter_expt_name + '/')
     postocr_linking_output_dir = os.path.join(output_folder, expt_name, 'postocr_linking/'+ spotter_expt_name)
     postocr_only_output_dir = os.path.join(output_folder, expt_name, 'postocr_only/'+ spotter_expt_name)
 
@@ -339,49 +339,7 @@ def run_pipeline(args):
     time_post_ocr = time.time()
     
     
-     # ------------------------- Convert image coordinates to geocoordinates ------------------------------
-    if module_geocoord_geojson:
-        os.chdir(os.path.join(map_kurator_system_dir, 'm4_geocoordinate_converter'))
-        
-        if not os.path.isdir(geojson_output_dir):
-            os.makedirs(geojson_output_dir)
-
-        for index, record in sample_map_df.iterrows():
-            external_id = record.external_id
-            # if external_id not in external_id_to_img_path_dict:
-            #     error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-            #     continue 
-
-            in_geojson = os.path.join(output_folder, postocr_output_dir+'/') + external_id.strip("'").replace('.', '') + ".geojson"
-
-            run_converter_command = 'python convert_geojson_to_geocoord.py --input_dir_path '+ os.path.join(map_kurator_system_dir, input_img_path) +' --in_geojson_file '+ in_geojson +' --out_geojson_dir '+ os.path.join(map_kurator_system_dir, geojson_output_dir)
-
-            exe_ret = execute_command(run_converter_command, if_print_command)
-
-            # if 'error' in exe_ret:
-            #     error = exe_ret['error']
-            #     error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
-            # elif 'time_usage' in exe_ret:
-            #     time_usage = exe_ret['time_usage']
-            #     time_usage_dict[external_id]['geocoord_geojson'] = time_usage
-            # else:
-            #     raise NotImplementedError
-
-    time_geocoord_geojson = time.time()
-
-    # # ------------------------- Link entities in OSM ------------------------------
-    # if module_entity_linking:
-    #     os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
-        
-    #     geojson_linked_output_dir = os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker', 'data/100_maps_geojson_abc_linked/')
-    #     if not os.path.isdir(geojson_output_dir):
-    #         os.makedirs(geojson_output_dir)
-
-    #     run_linker_command = 'python post_ocr_entity_linker.py --sample_map_path '+ input_img_path +' --in_geojson_dir '+ geojson_output_dir +' --out_geojson_dir '+ geojson_linked_output_dir
-    #     execute_command(run_linker_command, if_print_command)
-
-    # time_entity_linking = time.time()
-
+ 
 
     # --------------------- Time usage logging --------------------------
     # print('\n')
@@ -438,7 +396,7 @@ def main():
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
-    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
+    
     parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_only', default=False, action='store_true')
 
