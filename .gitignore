@@ -8,5 +8,5 @@ MrSID*
 __pycache__
 debug/
 .ipynb_checkpoints/
-m6_entity_linker/
-m4_geocoordinate_converter/validation.py
+run_linker.py
+osm_linker.csv

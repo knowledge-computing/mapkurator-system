@@ -5,14 +5,14 @@ import time
 import logging
 import pandas as pd
 import datetime
-from PIL import Image 
+# from PIL import Image 
 from utils import get_img_path_from_external_id, get_img_path_from_external_id_and_image_no
 
 import subprocess
 
 
 logging.basicConfig(level=logging.INFO)
-Image.MAX_IMAGE_PIXELS=None # allow reading huge images
+# Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
 # def execute_command(command, if_print_command):
 #     t1 = time.time()
@@ -63,11 +63,11 @@ def run_pipeline(args):
     module_gen_geotiff = args.module_gen_geotiff
     module_cropping = args.module_cropping
     module_text_spotting = args.module_text_spotting
-    module_img_geojson = args.module_img_geojson 
-    module_geocoord_geojson = args.module_geocoord_geojson 
-    module_post_ocr_entity_linking = args.module_post_ocr_entity_linking
+    module_img_geojson = args.module_img_geojson
     module_post_ocr_only = args.module_post_ocr_only
     module_post_ocr = args.module_post_ocr
+    module_geocoord_geojson = args.module_geocoord_geojson 
+    module_entity_linking = args.module_entity_linking
 
     spotter_model = args.spotter_model
     spotter_config = args.spotter_config
@@ -89,7 +89,7 @@ def run_pipeline(args):
         raise NotImplementedError
 
     # external_id_to_img_path_dict = get_img_path_from_external_id( sample_map_path = input_csv_path)
-    external_id_to_img_path_dict, unmatched_external_id_list = get_img_path_from_external_id_and_image_no( sample_map_path = input_csv_path)
+    external_id_to_img_path_dict, unmatched_external_id_list = get_img_path_from_external_id_and_image_no(sample_map_path = input_csv_path)
 
     # initialize error reason dict
     error_reason_dict = dict()
@@ -106,9 +106,9 @@ def run_pipeline(args):
     cropping_output_dir = os.path.join(output_folder, expt_name, 'crop/')
     spotting_output_dir = os.path.join(output_folder, expt_name,  'spotter/' + spotter_expt_name)
     stitch_output_dir = os.path.join(output_folder, expt_name, 'stitch/' + spotter_expt_name)
-    geocoord_output_dir = os.path.join(output_folder, expt_name, 'geocoord/' + spotter_expt_name)
-    postocr_linking_output_dir = os.path.join(output_folder, expt_name, 'postocr_linking/'+ spotter_expt_name)
     postocr_only_output_dir = os.path.join(output_folder, expt_name, 'postocr_only/'+ spotter_expt_name)
+    geocoord_output_dir = os.path.join(output_folder, expt_name, 'geocoord/' + spotter_expt_name)
+    entity_linker_output_dir = os.path.join(output_folder, expt_name, 'entity_linking/' + spotter_expt_name)
 
 
     if not os.path.isdir(expt_out_dir):
@@ -278,7 +278,6 @@ def run_pipeline(args):
             
     # time_img_geojson = time.time()
 
-
     # ------------------------- post-OCR ------------------------------
     if module_post_ocr:
         os.chdir(os.path.join(map_kurator_system_dir, 'm4_post_ocr'))
@@ -296,7 +295,7 @@ def run_pipeline(args):
             img_path = external_id_to_img_path_dict[external_id]
             map_name = os.path.basename(img_path).split('.')[0]
             
-            input_geojson_file = os.path.join(geocoord_output_dir, map_name + '.geojson')
+            input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
 
             run_postocr_command = 'python post_ocr_main.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir)
             
@@ -338,7 +337,7 @@ def run_pipeline(args):
             #     only_map = mapname.split("/")[-1]#.strip().replace(".geojson", "")
             #     saved_map_list.append(only_map)
 
-            in_geojson = os.path.join(stitch_output_dir, map_name + '.geojson')
+            in_geojson = os.path.join(postocr_only_output_dir, map_name + '.geojson')
             # current_map = in_geojson.split("/")[-1]
 
             # if current_map not in saved_map_list: 
@@ -359,6 +358,26 @@ def run_pipeline(args):
 #                 raise NotImplementedError
 
 #     time_geocoord_geojson = time.time()
+
+    # ------------------------- entity linker ------------------------------
+    if module_entity_linking:
+        os.chdir(os.path.join(map_kurator_system_dir, 'm6_entity_linker'))
+
+        if not os.path.isdir(entity_linker_output_dir):
+            os.makedirs(entity_linker_output_dir)
+            
+        run_entity_inking_command = 'python entity_linking.py --sample_map_path ' + os.path.join(map_kurator_system_dir, input_csv_path) + ' --in_geojson_dir '+ postocr_only_output_dir + ' --out_geojson_dir ' + entity_linker_output_dir
+        exe_ret = os.system(run_entity_inking_command)
+            
+        # if 'error' in exe_ret:
+        #     error = exe_ret['error']
+        #     error_reason_dict[external_id] = {'img_path':img_path, 'error': error }
+
+    #         elif 'time_usage' in exe_ret:
+    #             time_usage = exe_ret['time_usage']
+    #             time_usage_dict[external_id]['geocoord_geojson'] = time_usage
+    #         else:
+    #             raise NotImplementedError
 
 
     # --------------------- Time usage logging --------------------------
@@ -415,10 +434,10 @@ def main():
     parser.add_argument('--module_cropping', default=False, action='store_true')
     parser.add_argument('--module_text_spotting', default=False, action='store_true')
     parser.add_argument('--module_img_geojson', default=False, action='store_true')
-    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
-    parser.add_argument('--module_post_ocr_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr_only', default=False, action='store_true')
     parser.add_argument('--module_post_ocr', default=False, action='store_true')
+    parser.add_argument('--module_geocoord_geojson', default=False, action='store_true')
+    parser.add_argument('--module_entity_linking', default=False, action='store_true')
 
     parser.add_argument('--spotter_model', type=str, default='spotter-v2', choices=['testr', 'spotter-v2', "palette"], 
         help='Select text spotting model option from ["testr", "spotter-v2", "palette"]') # select text spotting model

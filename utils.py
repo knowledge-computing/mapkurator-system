@@ -93,7 +93,6 @@ def get_img_path_from_external_id_and_image_no(jp2_root_dir = '/data/rumsey-jp2/
     
     return external_id_to_img_path_dict, unmatched_external_id_list
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
