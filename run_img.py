@@ -285,59 +285,6 @@ def run_pipeline(args):
             
     time_img_geojson = time.time()
 
-    # ------------------------- post-OCR ------------------------------
-    if module_post_ocr_entity_linking:
-        
-        os.chdir(os.path.join(map_kurator_system_dir, 'm5_post_ocr_entity_linker'))
-
-        if module_post_ocr_only: 
-            if not os.path.isdir(postocr_only_output_dir):
-                os.makedirs(postocr_only_output_dir)
-        else:
-            if not os.path.isdir(postocr_linking_output_dir):
-                os.makedirs(postocr_linking_output_dir)
-
-        for index, record in sample_map_df.iterrows():
-            
-            external_id = record.external_id
-            # if external_id not in external_id_to_img_path_dict:
-            #     error_reason_dict[external_id] = {'img_path':None, 'error':'key not in external_id_to_img_path_dict'} 
-            #     continue
-
-            img_path = sample_map_df['external_id'].iloc[index]
-            map_name = os.path.basename(img_path).split('.')[0]
-
-            input_geojson_file = os.path.join(stitch_output_dir, map_name + '.geojson')
-            
-            if module_post_ocr_only: 
-                run_postocr_only_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_only_output_dir) +  ' --module_post_ocr_only'
-                exe_ret = execute_command(run_postocr_only_command, if_print_command)
-                # if 'error' in exe_ret:
-                #     error = exe_ret['error']
-                #     error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-
-            else:
-                run_postocr_linking_command = 'python post_ocr_entity_linker.py --in_geojson_file '+ input_geojson_file + ' --out_geojson_dir ' + os.path.join(map_kurator_system_dir, postocr_linking_output_dir)
-                exe_ret = execute_command(run_postocr_linking_command, if_print_command)
-
-            #geojson_postocr_output_file = os.path.join(postocr_output_dir, map_name + '.geojson')
-            # print('input_geojson_file',input_geojson_file)
-            # print('geojson_postocr_output_file',geojson_postocr_output_file)
-            # run_postocr_command = 'python post_ocr.py --in_geojson_dir '+ input_geojson_file +' --out_geojson_dir '+ geojson_postocr_output_file
-
-            # exe_ret = execute_command(run_postocr_command, if_print_command)
-            print('exe_ret',exe_ret)
-            # if 'error' in exe_ret:
-            #     error = exe_ret['error']
-            #     error_reason_dict[external_id] = {'img_path':img_path, 'error': error } 
-            # elif 'time_usage' in exe_ret:
-            #     time_usage = exe_ret['time_usage']
-            #     time_usage_dict[external_id]['postocr'] = time_usage
-            # else:
-            #     raise NotImplementedError
-
-    time_post_ocr = time.time()
-    
     
  
 
