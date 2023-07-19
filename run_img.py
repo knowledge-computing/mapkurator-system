@@ -12,8 +12,6 @@ from utils import get_img_path_from_external_id, get_img_path_from_external_id_a
 
 import subprocess
 
-#this code is the case for getting an input as folders which include images.  
-#tested image : /home/maplord/rumsey/mapkurator-system/data/100_maps_crop/crop_leeje_2/test_run_img/
 logging.basicConfig(level=logging.INFO)
 Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
