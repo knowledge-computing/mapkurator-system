@@ -5,14 +5,14 @@ import time
 import logging
 import pandas as pd
 import datetime
-# from PIL import Image 
+from PIL import Image 
 from utils import get_img_path_from_external_id, get_img_path_from_external_id_and_image_no
 
 import subprocess
 
 
 logging.basicConfig(level=logging.INFO)
-# Image.MAX_IMAGE_PIXELS=None # allow reading huge images
+Image.MAX_IMAGE_PIXELS=None # allow reading huge images
 
 # def execute_command(command, if_print_command):
 #     t1 = time.time()
