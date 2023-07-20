@@ -130,28 +130,20 @@ def main(args):
 
                 for source_table in source_tables:
                     osm_ids = [osm_id for table, osm_id in es_results if table == source_table]
-                    # print("start quering ... ", source_table, osm_ids)
+
                     if "points" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
                                 WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
-                        cur.execute(sql,(osm_ids,))
-                        sql_result = cur.fetchall()
-                        if len(sql_result) != 0:
-                            output_osm_ids.extend([x[0] for x in sql_result])
-
+                    
                     elif "line" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
                                 WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
-                        cur.execute(sql,(osm_ids,))
-                        sql_result = cur.fetchall()
-                        if len(sql_result) != 0:
-                            output_osm_ids.extend([x[0] for x in sql_result])
 
                     elif "polygon" in source_table:
                         sql = f"""SELECT osm_id
@@ -159,10 +151,11 @@ def main(args):
                                 WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
                                 AND osm_id = ANY (%s)
                         """
-                        cur.execute(sql,(osm_ids,))
-                        sql_result = cur.fetchall()
-                        if len(sql_result) != 0:
-                            output_osm_ids.extend([x[0] for x in sql_result])
+                    
+                    cur.execute(sql,(osm_ids,))
+                    sql_result = cur.fetchall()
+                    if len(sql_result) != 0:
+                        output_osm_ids.extend([x[0] for x in sql_result])
 
                 feature_data["properties"]["osm_id"] = output_osm_ids
 
