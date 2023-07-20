@@ -84,6 +84,12 @@ def main(args):
             for feature_data in data['features']:
                 map_text = str(feature_data['properties']['postocr_label'])
 
+                # skip null geometry
+                if feature_data['geometry'] is None:
+                    feature_data["properties"] = dict()
+                    feature_data["properties"]["osm_id"] = []
+                    continue
+                
                 # skip text less than 3 characters
                 if len(map_text) <= 3:
                     # empty properties
@@ -91,15 +97,9 @@ def main(args):
                     feature_data["properties"]["osm_id"] = []
                     continue
 
-                # skip null geometries
-                if feature_data['geometry'] is None:
-                    feature_data["properties"] = dict()
-                    feature_data["properties"]["osm_id"] = []
-                    continue
-
                 pts = np.array(feature_data['geometry']['coordinates']).reshape(-1, 2)
                 map_polygon = Polygon(pts)
-
+                
                 # empty properties
                 feature_data["properties"] = dict()
 
@@ -142,7 +142,7 @@ def main(args):
                         if len(sql_result) != 0:
                             output_osm_ids.extend([x[0] for x in sql_result])
 
-                    elif "line" in source_table or "polygon" in source_table:
+                    elif "line" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
                                 WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
@@ -152,6 +152,18 @@ def main(args):
                         sql_result = cur.fetchall()
                         if len(sql_result) != 0:
                             output_osm_ids.extend([x[0] for x in sql_result])
+
+                    elif "polygon" in source_table:
+                        sql = f"""SELECT osm_id
+                                FROM  {source_table}
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
+                                AND osm_id = ANY (%s)
+                        """
+                        cur.execute(sql,(osm_ids,))
+                        sql_result = cur.fetchall()
+                        if len(sql_result) != 0:
+                            output_osm_ids.extend([x[0] for x in sql_result])
+
                 feature_data["properties"]["osm_id"] = output_osm_ids
 
         with open(os.path.join(output_dir, input_geojson_file.split("/")[-1]), 'w', encoding='utf8') as output_geojson:
