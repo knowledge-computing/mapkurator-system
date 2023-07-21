@@ -86,22 +86,16 @@ def main(args):
 
                 # skip null geometry
                 if feature_data['geometry'] is None:
-                    feature_data["properties"] = dict()
                     feature_data["properties"]["osm_id"] = []
                     continue
                 
                 # skip text less than 3 characters
                 if len(map_text) <= 3:
-                    # empty properties
-                    feature_data["properties"] = dict()
                     feature_data["properties"]["osm_id"] = []
                     continue
 
                 pts = np.array(feature_data['geometry']['coordinates']).reshape(-1, 2)
                 map_polygon = Polygon(pts)
-                
-                # empty properties
-                feature_data["properties"] = dict()
 
                 es_query = {
                     "bool": {
@@ -129,6 +123,7 @@ def main(args):
                 source_tables = set([table for table, _ in es_results])
 
                 for source_table in source_tables:
+                    sql = ""
                     osm_ids = [osm_id for table, osm_id in es_results if table == source_table]
 
                     if "points" in source_table:
@@ -145,13 +140,13 @@ def main(args):
                                 AND osm_id = ANY (%s)
                         """
 
-                    elif "polygon" in source_table:
+                    elif "polygon" in source_table or "other_relations" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
                                 WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
                                 AND osm_id = ANY (%s)
                         """
-                    
+
                     cur.execute(sql,(osm_ids,))
                     sql_result = cur.fetchall()
                     if len(sql_result) != 0:
