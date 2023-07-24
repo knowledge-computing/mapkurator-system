@@ -65,7 +65,7 @@ def run_pipeline(args):
     module_cropping = args.module_cropping
     module_text_spotting = args.module_text_spotting
     module_img_geojson = args.module_img_geojson 
-    module_geocoord_geojson = args.module_geocoord_geojson 
+    # module_geocoord_geojson = args.module_geocoord_geojson 
     module_post_ocr_entity_linking = args.module_post_ocr_entity_linking
     module_post_ocr_only = args.module_post_ocr_only
 
@@ -220,8 +220,18 @@ def run_pipeline(args):
             if not os.path.isdir(map_spotting_output_dir):
                 os.makedirs(map_spotting_output_dir)
         
-            print(os.path.join(cropping_output_dir,map_name))
-    
+            # print(os.path.join(cropping_output_dir,map_name))
+            else:
+                num_existing_json = len(glob.glob(os.path.join(map_spotting_output_dir, '*.json')))
+                num_existing_images = len(glob.glob(os.path.join(cropping_output_dir, map_name, '*jpg')))
+                if num_existing_json == num_existing_images:
+                    continue
+                else:
+                    print(f'{index}/{len(sample_map_df)}: Re-run spotting for map {map_name}')
+                    import shutil
+                    shutil.rmtree(map_spotting_output_dir)
+                    os.makedirs(map_spotting_output_dir)     
+
             if spotter_model == 'testr':
                 run_spotting_command = f'python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(cropping_output_dir,map_name)} --output {map_spotting_output_dir} --opts MODEL.TRANSFORMER.INFERENCE_TH_TEST 0.3'
                 # print(run_spotting_command)
