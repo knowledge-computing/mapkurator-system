@@ -17,8 +17,7 @@ import elasticsearch
 
 from dotenv import load_dotenv
 import psycopg2
-from postgres_logger import LinkerLoggingConnection
-
+# from postgres_logger import LinkerLoggingConnection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,17 +43,19 @@ def main(args):
     # postgres connection 
     load_dotenv()
     DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
     DB_USERNAME = os.getenv("DB_USERNAME")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")
+    
     try:
-        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT, connection_factory=LinkerLoggingConnection)
+        # conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT, connection_factory=LinkerLoggingConnection)
+        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT)
     except:
         logging.warning('Error on psycopg2 connection')
         return
 
-    conn.initialize(logger)
+    # conn.initialize(logger)
     cur = conn.cursor()
 
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'image_no': str})
@@ -129,25 +130,29 @@ def main(args):
                     if "points" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
                     
                     elif "line" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
 
                     elif "polygon" in source_table or "other_relations" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
                                 AND osm_id = ANY (%s)
                         """
 
-                    cur.execute(sql,(osm_ids,))
+                    try:
+                        cur.execute(sql,(osm_ids,))
+                    except Exception as e:
+                        continue
+                        
                     sql_result = cur.fetchall()
                     if len(sql_result) != 0:
                         output_osm_ids.extend([x[0] for x in sql_result])
