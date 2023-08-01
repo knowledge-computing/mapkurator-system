@@ -60,9 +60,10 @@ def main(args):
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'image_no': str})
     sample_map_df['image_no'] = sample_map_df['image_no'].str.replace('.1.jp2', '', regex=False).str.replace('.jp2', '', regex=False)
     sample_map_df['image_no'] = sample_map_df['image_no'].apply(lambda x: x[:-2] if x[-2:] == '.1' else x)
-    
+
     for index, record in sample_map_df.iterrows():
         input_geojson_file = os.path.join(input_dir, record.image_no + ".geojson")
+	
         if not os.path.exists(input_geojson_file):
             logging.warning('PostOCR output does not exist %s', record.image_no + ".geojson")
             continue
@@ -77,7 +78,7 @@ def main(args):
             except json.decoder.JSONDecodeError:
                 if os.path.getsize(input_geojson_file) == 0:
                     with open(os.path.join(output_dir, input_geojson_file.split("/")[-1]), 'w') as fp:
-                        pass
+                        continue
                 else:
                     logging.info('JSONDecodeError %s', input_geojson_file)
                 continue
@@ -130,27 +131,28 @@ def main(args):
                     if "points" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                WHERE ST_CONTAINS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
                     
                     elif "line" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), wkb_geometry)
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), wkb_geometry)
                                 AND osm_id = ANY (%s)
                         """
 
                     elif "polygon" in source_table or "other_relations" in source_table:
                         sql = f"""SELECT osm_id
                                 FROM  {source_table}
-                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_GeomFromText('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
+                                WHERE ST_INTERSECTS(ST_TRANSFORM(ST_SetSRID(ST_MakeValid('{map_polygon}'), 3857), 4326), ST_MakeValid(wkb_geometry, 'method=structure'))
                                 AND osm_id = ANY (%s)
                         """
 
                     try:
                         cur.execute(sql,(osm_ids,))
                     except Exception as e:
+                        # logging.info('Error occured while executing sql for %s', input_geojson_file.split("/")[-1])
                         continue
                         
                     sql_result = cur.fetchall()
