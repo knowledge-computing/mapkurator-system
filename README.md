@@ -12,7 +12,7 @@ Please refer to this link to check all the spotter models in mapKurator : [https
 
 ## Data Card - Derived Dataset Processed by mapKurator System 
 
-Map text recognized from the georeferenced Rumsey historical map collection.
+Map text recognized from the [Rumsey historical map collection](https://www.davidrumsey.com/) with 57K georeferenced maps. 
 
 ### Dataset Download Link
 
