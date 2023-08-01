@@ -17,7 +17,7 @@ import elasticsearch
 
 from dotenv import load_dotenv
 import psycopg2
-# from postgres_logger import LinkerLoggingConnection
+from postgres_logger import LinkerLoggingConnection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,13 +49,12 @@ def main(args):
     DB_NAME = os.getenv("DB_NAME")
     
     try:
-        # conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT, connection_factory=LinkerLoggingConnection)
-        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT)
+        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USERNAME, password=DB_PASSWORD, port=DB_PORT, connection_factory=LinkerLoggingConnection)
     except:
         logging.warning('Error on psycopg2 connection')
         return
 
-    # conn.initialize(logger)
+    conn.initialize(logger)
     cur = conn.cursor()
 
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'image_no': str})
