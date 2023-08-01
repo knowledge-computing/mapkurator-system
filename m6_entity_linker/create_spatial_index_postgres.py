@@ -17,7 +17,7 @@ tables = ['points', 'lines', 'multilinestrings','multipolygons','other_relations
 for continent in continents:
     for table in tables:
         name = continent + "." + table
-        # cur.execute(f'''CREATE INDEX {name.replace(".","_")+"_index"} ON {name} USING gist (wkb_geometry);''')
+        cur.execute(f'''CREATE INDEX {name.replace(".","_")+"_index"} ON {name} USING gist (wkb_geometry);''')
         cur.execute(f'''CREATE INDEX {name.replace(".","_")+"_osm_index"} ON {name} (osm_id);''')
         print(name, " creating index...")
     
