@@ -81,7 +81,7 @@ def main(args):
                         continue
                 else:
                     logging.info('JSONDecodeError %s', input_geojson_file)
-                continue
+                    continue
 
             for feature_data in data['features']:
                 map_text = str(feature_data['properties']['postocr_label'])
