@@ -17,6 +17,7 @@ def main(args):
 
     sample_map_df = pd.read_csv(args.sample_map_path, dtype={'image_no': str})
     sample_map_df['image_no'] = sample_map_df['image_no'].str.replace('.1.jp2', '', regex=False).str.replace('.jp2', '', regex=False)
+    sample_map_df['image_no'] = sample_map_df['image_no'].apply(lambda x: x[:-2] if x[-2:] == '.1' else x)
     
     geojson_filename_id = geojson_file.split(".")[0].split("/")[-1]
 
