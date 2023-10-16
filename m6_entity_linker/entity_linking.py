@@ -154,7 +154,10 @@ def main(args):
                             cur.execute(sql,(osm_ids,))
                         except Exception as e:
                             logging.warning('Error occured while executing sql for %s', input_geojson_file.split("/")[-1], e)
-                            return
+                            if "TopologyException" in repr(e):
+                                continue
+                            else:
+                                return
                             
                         sql_result = cur.fetchall()
                         if len(sql_result) != 0:
