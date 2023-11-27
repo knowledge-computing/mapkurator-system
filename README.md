@@ -16,8 +16,7 @@ Map text recognized from the [Rumsey historical map collection](https://www.davi
 
 ### Dataset Download Link
 
-- **Original Map Images:**  https://www.davidrumsey.com/
-- **Processed Output:** https://s3.msi.umn.edu/rumsey_output/geojson_testr_syn_54119.zip
+Contact Zekun (li002666@umn.edu) or Yijun (lin00786@umn.edu) for the data download link.
 
 ### Dataset Languages
 
