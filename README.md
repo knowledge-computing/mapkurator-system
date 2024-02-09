@@ -6,7 +6,7 @@
 mapKurator is a fully automatic pipeline developed by the [**Knowledge Computing Lab**](https://knowledge-computing.github.io/) at the **University of Minnesota** to process a large number of scanned historical map images. Outputs include the recognized text labels, label bounding polygons, labels after post-OCR correction, and a geo-entity identifier from OpenStreetMap.
 
 ### mapKurator textspotter repository
-Please refer to this link to check all the spotter models in mapKurator : [https://github.com/knowledge-computing/mapkurator-spotter](https://github.com/knowledge-computing/mapkurator-spotter)
+Please refer to this link to check all the spotter models in mapKurator : [Spotter-v2](https://github.com/knowledge-computing/mapkurator-spotter), [PALETTE](https://github.com/knowledge-computing/mapkurator-palette)
 
 ---------
 
