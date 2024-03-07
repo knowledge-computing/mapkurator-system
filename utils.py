@@ -96,7 +96,7 @@ def run_pipeline(args):
             input_img_path = input_dir_path 
             sample_map_df = pd.DataFrame(columns = ["external_id"])
             for images in os.listdir(input_img_path):
-                    tmp_path={"external_id": input_img_path+images}
+                    tmp_path={"external_id": os.path.join(input_img_path,images)}
                     sample_map_df=sample_map_df.append(tmp_path,ignore_index=True)
         else:
             raise NotImplementedError            
