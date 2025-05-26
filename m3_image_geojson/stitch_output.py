@@ -40,8 +40,8 @@ def concatenate_and_convert_to_geojson(args):
             continue 
         
         for index, line_data in df.iterrows():
-            df['polygon_x'][index] = np.array(df['polygon_x'][index]) + shift_size * patch_index_w
-            df['polygon_y'][index] = np.array(df['polygon_y'][index]) + shift_size * patch_index_h
+            df['polygon_x'][index] = np.array(df['polygon_x'][index]).astype(float) + shift_size * patch_index_w
+            df['polygon_y'][index] = np.array(df['polygon_y'][index]).astype(float) + shift_size * patch_index_h
         map_data.append(df)
 
     if len(map_data) == 0: 
