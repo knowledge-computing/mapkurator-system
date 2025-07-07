@@ -16,7 +16,7 @@ Map text recognized from the [Rumsey historical map collection](https://www.davi
 
 ### Dataset Download Link
 
-Contact Zekun (li002666@umn.edu) or Yijun (lin00786@umn.edu) for the data.
+Text extraction and recognition results [https://s3.msi.umn.edu/rumsey_output/Round3/english.zip](https://s3.msi.umn.edu/rumsey_output/Round3/english.zip (~50GB)) (~50GB)
 
 ### Dataset Languages
 
